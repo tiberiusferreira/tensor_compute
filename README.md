@@ -1,6 +1,6 @@
 # Rust GPU Compute 
 
-This is a persona project to teach myself WebGPU computing, focused 
+This is a personal project to teach myself WebGPU computing, focused 
 on Machine Learning application.
 
 Working Example:
