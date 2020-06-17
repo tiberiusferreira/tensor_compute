@@ -1,0 +1,37 @@
+#version 450
+layout(local_size_x = 1) in;
+
+readonly layout(set = 0, binding = 0) buffer Ma {
+     uint[] indices_a;
+};
+
+readonly layout(set = 0, binding = 1) buffer Mb {
+    uint[] indices_b;
+};
+
+layout(set = 0, binding = 2) buffer Out {
+    uint[] indices_out;
+};
+
+layout(set = 0, binding = 3) buffer MatricesData {
+    uint rows_a;
+    uint cols_a;
+    uint rows_b;
+    uint cols_b;
+};
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    uint rows_out = rows_a;
+    uint cols_out = cols_b;
+
+    uint curr_out_row = index / rows_out;
+    uint curr_out_col = index % rows_out;
+
+    for (uint i=0; i < cols_a; i++){
+        indices_out[index] += indices_a[curr_out_row*cols_a + i] * indices_b[cols_b*i + curr_out_col];
+    }
+
+}
+
+
