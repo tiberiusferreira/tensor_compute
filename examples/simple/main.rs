@@ -6,6 +6,8 @@ fn main() {
     let async_block = async {
         let gpu = GpuBox::new().await;
         let ma_gpu = ma.copy_to_gpu(&gpu);
+        let ma_te = ma_gpu.copy_to_cpu(&gpu).await;
+        println!("{:?}", ma_te);
         let mb_gpu = mb.copy_to_gpu(&gpu);
         let times = gpu.mm(&ma_gpu, &mb_gpu).await;
         let cpu_copy = times.copy_to_cpu(&gpu).await;

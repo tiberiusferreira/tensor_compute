@@ -1,0 +1,91 @@
+use crate::GpuBox;
+use std::convert::TryInto;
+use wgpu::Buffer;
+
+struct BoundGpuBuffer {
+    buffer: Buffer,
+    readonly: bool,
+    binding: u32,
+}
+
+impl GpuBuffer {
+    pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding as u32,
+            visibility: wgpu::ShaderStage::COMPUTE,
+            ty: wgpu::BindingType::StorageBuffer {
+                dynamic: false,
+                readonly: false,
+            },
+            ..Default::default()
+        }
+    }
+}
+
+pub struct GpuBuffer {
+    buffer: Buffer,
+    size_bytes: usize,
+    staging_output: bool,
+}
+
+impl GpuBuffer {
+    pub fn raw_buffer(&self) -> &Buffer {
+        &self.buffer
+    }
+    pub fn size_bytes(&self) -> usize {
+        self.size_bytes
+    }
+    pub fn staging_output(&self) -> bool {
+        self.staging_output
+    }
+}
+
+impl GpuBox {
+    /// A Buffer which can be COPIED to from other buffers MAPPED to readonly CPU memory
+    /// This is needed because we cant read STORAGE buffers directly
+    pub fn staging_output_buffer(&self, size: usize) -> GpuBuffer {
+        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: size as u64,
+            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
+        });
+        GpuBuffer {
+            buffer,
+            size_bytes: size,
+            staging_output: true,
+        }
+    }
+
+    /// Storage buffer with given data. Behind the scenes it actually creates a new buffer, maps
+    /// it into host-visible memory, copies data from the given slice,
+    /// and finally unmaps it, returning a [`Buffer`].
+    pub fn gpu_buffer_from_data(&self, input_bytes: &[u8]) -> GpuBuffer {
+        let buffer = self.device.create_buffer_with_data(
+            input_bytes,
+            wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
+        );
+        GpuBuffer {
+            buffer,
+            size_bytes: input_bytes.len(),
+            staging_output: false,
+        }
+    }
+
+    /// Creates an empty GPU buffer which can be copied to another buffer.
+    /// One used case if to accumulate results of a computation in it and copy them to an
+    /// output staging buffer
+    pub fn empty_gpu_buffer(&self, size: usize) -> GpuBuffer {
+        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: size as u64,
+            usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
+            mapped_at_creation: false,
+        });
+        GpuBuffer {
+            buffer,
+            size_bytes: size,
+            staging_output: false,
+        }
+    }
+}
