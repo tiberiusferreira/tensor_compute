@@ -2,15 +2,15 @@
 layout(local_size_x = 1) in;
 
 readonly layout(set = 0, binding = 0) buffer Ma {
-     uint[] indices_a;
+     float[] indices_a;
 };
 
 readonly layout(set = 0, binding = 1) buffer Mb {
-    uint[] indices_b;
+    float[] indices_b;
 };
 
 layout(set = 0, binding = 2) buffer Out {
-    uint[] indices_out;
+    float[] indices_out;
 };
 
 layout(set = 0, binding = 3) buffer MatricesData {

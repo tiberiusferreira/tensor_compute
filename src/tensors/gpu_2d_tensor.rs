@@ -3,6 +3,7 @@ use crate::tensors::CpuTensor2D;
 use crate::GpuBox;
 use std::convert::TryInto;
 
+
 pub struct Gpu2DTensor {
     buffer: GpuBuffer,
     shape: (usize, usize),
@@ -22,7 +23,7 @@ impl Gpu2DTensor {
     }
 
     pub fn buffer_size_in_bytes(&self) -> usize {
-        (std::mem::size_of::<u32>() * self.shape.0 * self.shape.1)
+        std::mem::size_of::<f32>() * self.shape.0 * self.shape.1
     }
 
     pub async fn copy_to_cpu(&self, gpu: &GpuBox) -> CpuTensor2D {
@@ -52,23 +53,19 @@ impl Gpu2DTensor {
 
         if let Ok(()) = buffer_future_a.await {
             let data = buffer_slice_a.get_mapped_range();
-            let result: Vec<u32> = data
-                .chunks_exact(4)
-                .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
+
+            let result: Vec<f32> = data
+                .chunks_exact(std::mem::size_of::<f32>())
+                .map(|b| f32::from_ne_bytes(b.try_into().unwrap()))
                 .collect();
 
             // With the current interface, we have to make sure all mapped views are
             // dropped before we unmap the buffer.
             drop(data);
             cpu_readable_output_buffer.raw_buffer().unmap();
-            CpuTensor2D {
-                data: result,
-                shape: self.shape,
-            }
+            CpuTensor2D::new(result, self.shape)
         } else {
-            panic!()
+            panic!("Could not transfer data to CPU!")
         }
-
-        // unimplemented!()
     }
 }

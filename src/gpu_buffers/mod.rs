@@ -1,12 +1,5 @@
 use crate::GpuBox;
-use std::convert::TryInto;
 use wgpu::Buffer;
-
-struct BoundGpuBuffer {
-    buffer: Buffer,
-    readonly: bool,
-    binding: u32,
-}
 
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {

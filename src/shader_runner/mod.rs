@@ -1,8 +1,10 @@
+mod shader_runner;
+pub use shader_runner::*;
 use crate::GpuBox;
 use wgpu::ShaderModule;
 
 impl GpuBox {
-    pub fn shader(&self, file: &[u8]) -> ShaderModule {
+    pub fn shader_from_file_bytes(&self, file: &[u8]) -> ShaderModule {
         let cs_module = self
             .device
             .create_shader_module(&wgpu::read_spirv(std::io::Cursor::new(&file[..])).unwrap());

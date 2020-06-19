@@ -1,8 +1,8 @@
 use gpu_compute::{CpuTensor2D, GpuBox};
 
 fn main() {
-    let ma = CpuTensor2D::new(vec![1, 2, 3, 4], (2, 2));
-    let mb = CpuTensor2D::new(vec![2, 3, 4, 5], (2, 2));
+    let ma = CpuTensor2D::new(vec![1., 2., 3., 4.], (2, 2));
+    let mb = CpuTensor2D::new(vec![2., 3., 4., 5.], (2, 2));
     let async_block = async {
         let gpu = GpuBox::new().await;
         let ma_gpu = ma.copy_to_gpu(&gpu);
