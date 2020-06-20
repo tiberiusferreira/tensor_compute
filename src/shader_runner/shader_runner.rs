@@ -1,26 +1,26 @@
 use crate::gpu_buffers::GpuBuffer;
-use wgpu::{BindGroupLayoutEntry, Binding, ShaderModule};
 use crate::GpuBox;
+use wgpu::{BindGroupLayoutEntry, Binding, ShaderModule};
 
-pub struct ShaderInput<'a>{
+pub struct ShaderInput<'a> {
     pub binding_id: usize,
     pub gpu_buffer: &'a GpuBuffer,
 }
 
-impl <'a> ShaderInput <'a> {
-    pub fn to_bind_group_layout(&self) -> BindGroupLayoutEntry{
+impl<'a> ShaderInput<'a> {
+    pub fn to_bind_group_layout(&self) -> BindGroupLayoutEntry {
         self.gpu_buffer.layout(self.binding_id)
     }
 
-    pub fn to_bind_group(&self) -> Binding{
-        Binding{
+    pub fn to_bind_group(&self) -> Binding {
+        Binding {
             binding: self.binding_id as u32,
             resource: wgpu::BindingResource::Buffer(self.gpu_buffer.raw_buffer().slice(..)),
         }
     }
 }
 
-pub struct ThreadGroup{
+pub struct ThreadGroup {
     pub x: usize,
     pub y: usize,
     pub z: usize,

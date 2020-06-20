@@ -1,19 +1,15 @@
-use crate::tensors::Gpu2DTensor;
-use crate::{GpuBox};
-use zerocopy::AsBytes;
-use crate::shader_runner::{ShaderInput, ThreadGroup};
+use crate::GpuBox;
 
 impl GpuBox {
     pub async fn new() -> Self {
-        let instance = wgpu::Instance::new();
+        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
         let adapter = instance
             .request_adapter(
                 &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::Default,
+                    power_preference: wgpu::PowerPreference::HighPerformance,
                     compatible_surface: None,
                 },
                 wgpu::UnsafeExtensions::disallow(),
-                wgpu::BackendBit::PRIMARY,
             )
             .await
             .unwrap();

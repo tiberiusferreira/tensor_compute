@@ -3,14 +3,22 @@ use crate::tensors::CpuTensor2D;
 use crate::GpuBox;
 use std::convert::TryInto;
 
-
 pub struct Gpu2DTensor {
     buffer: GpuBuffer,
     shape: (usize, usize),
 }
 
 impl Gpu2DTensor {
-    pub fn new(buffer: GpuBuffer, shape: (usize, usize)) -> Self {
+    pub fn new(gpu: &GpuBox, data: Vec<f32>, shape: (usize, usize)) -> Self {
+        assert_eq!(
+            data.len(),
+            shape.0 * shape.1,
+            "Shape is not valid for the size of the data!"
+        );
+        CpuTensor2D::new(data, shape).to_gpu(gpu)
+    }
+
+    pub fn from_buffer(buffer: GpuBuffer, shape: (usize, usize)) -> Self {
         Self { buffer, shape }
     }
 
@@ -26,7 +34,7 @@ impl Gpu2DTensor {
         std::mem::size_of::<f32>() * self.shape.0 * self.shape.1
     }
 
-    pub async fn copy_to_cpu(&self, gpu: &GpuBox) -> CpuTensor2D {
+    pub async fn to_cpu(&self, gpu: &GpuBox) -> CpuTensor2D {
         let cpu_readable_output_buffer = gpu.staging_output_buffer(self.buffer_size_in_bytes());
 
         let mut encoder = gpu

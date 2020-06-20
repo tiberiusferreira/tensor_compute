@@ -3,15 +3,15 @@ use wgpu::Buffer;
 
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
-        wgpu::BindGroupLayoutEntry {
-            binding: binding as u32,
-            visibility: wgpu::ShaderStage::COMPUTE,
-            ty: wgpu::BindingType::StorageBuffer {
+        wgpu::BindGroupLayoutEntry::new(
+            binding as u32,
+            wgpu::ShaderStage::COMPUTE,
+            wgpu::BindingType::StorageBuffer {
                 dynamic: false,
+                min_binding_size: wgpu::NonZeroBufferAddress::new(4),
                 readonly: false,
             },
-            ..Default::default()
-        }
+        )
     }
 }
 
