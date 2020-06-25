@@ -1,0 +1,47 @@
+#version 450
+layout(local_size_x = 1) in;
+
+readonly layout(set = 0, binding = 0) buffer Ma {
+    float[] indices_a;
+};
+
+readonly layout(set = 0, binding = 1) buffer Mb {
+    float[] indices_b;
+};
+
+layout(set = 0, binding = 2) buffer Out {
+    float[] indices_out;
+};
+
+readonly layout(set = 0, binding = 3) buffer MatricesData {
+    uint batch_size;
+    uint stride_batch_size_a;
+    uint stride_batch_size_b;
+    uint rows_a;
+    uint stride_rows_a;
+    uint cols_a;
+    uint stride_cols_a;
+    uint rows_b;
+    uint stride_rows_b;
+    uint cols_b;
+    uint stride_cols_b;
+};
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    uint rows_out = rows_a;
+    uint cols_out = cols_b;
+
+    uint curr_batch_out = index / stride_batch_size_a;
+    uint index_without_offset = index - curr_batch_out*stride_batch_size_a;
+    uint curr_out_row = index_without_offset / rows_out;
+    uint curr_out_col = index_without_offset % rows_out;
+
+    for (uint i=0; i < cols_a; i++){
+        indices_out[index] += indices_a[curr_batch_out*stride_batch_size_a + curr_out_row*stride_rows_a + i*stride_cols_a] *
+        indices_b[curr_batch_out*stride_batch_size_b + stride_rows_b*i + curr_out_col];
+    }
+
+}
+
+

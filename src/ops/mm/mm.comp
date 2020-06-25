@@ -13,7 +13,7 @@ layout(set = 0, binding = 2) buffer Out {
     float[] indices_out;
 };
 
-layout(set = 0, binding = 3) buffer MatricesData {
+readonly layout(set = 0, binding = 3) buffer MatricesData {
     uint rows_a;
     uint cols_a;
     uint rows_b;
@@ -30,7 +30,6 @@ void main() {
 
     for (uint i=0; i < cols_a; i++){
         indices_out[index] += indices_a[curr_out_row*cols_a + i] * indices_b[cols_b*i + curr_out_col];
-//        indices_out[index] = 1;
     }
 
 }

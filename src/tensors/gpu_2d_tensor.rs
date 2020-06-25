@@ -18,12 +18,25 @@ impl Gpu2DTensor {
         CpuTensor2D::new(data, shape).to_gpu(gpu)
     }
 
+    pub fn len(&self) -> usize{
+        self.shape.0 * self.shape.1
+    }
+
     pub fn from_buffer(buffer: GpuBuffer, shape: (usize, usize)) -> Self {
         Self { buffer, shape }
     }
 
     pub fn shape(&self) -> (usize, usize) {
         self.shape.clone()
+    }
+
+    pub fn reshape(&mut self, shape: (usize, usize)){
+        assert_eq!(
+            self.len(),
+            shape.0 * shape.1,
+            "Shape is not valid for the size of the data!"
+        );
+        self.shape = shape;
     }
 
     pub fn buffer(&self) -> &GpuBuffer {

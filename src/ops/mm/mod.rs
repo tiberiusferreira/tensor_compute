@@ -30,7 +30,7 @@ impl GpuBox {
         let output_shape = (input_data_a.shape().0, input_data_b.shape().1);
         let nb_output_numbers = output_shape.0 * output_shape.1;
         let out_buffer_store =
-            self.empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
+            self.empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
         let input_structure_data = self.gpu_buffer_from_data(matrices_data.as_bytes());
         self.run_shader(

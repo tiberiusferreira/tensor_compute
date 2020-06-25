@@ -1,0 +1,19 @@
+#version 450
+layout(local_size_x = 1) in;
+
+readonly layout(set = 0, binding = 0) buffer Data {
+     float[] input_data;
+};
+
+
+layout(set = 0, binding = 1) buffer Out {
+    float[] out_buffer;
+};
+
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    out_buffer[index] = max(input_data[index], 0.1*input_data[index]);
+}
+
+
