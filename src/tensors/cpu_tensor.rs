@@ -1,4 +1,4 @@
-use crate::{Gpu2DTensor, GpuBox, GpuTensor};
+use crate::{GpuBox, GpuTensor};
 
 
 #[derive(Debug)]

@@ -1,4 +1,4 @@
-use crate::{GpuBox, Gpu2DTensor};
+use crate::{GpuBox};
 
 #[test]
 fn relu_1d() {

@@ -1,7 +1,7 @@
 mod tests;
 
 use crate::shader_runner::{ShaderInput, ThreadGroup};
-use crate::{Gpu2DTensor, GpuBox, GpuTensor};
+use crate::{GpuBox, GpuTensor, Tensor};
 use zerocopy::{AsBytes, FromBytes};
 
 #[repr(C)]
@@ -42,8 +42,9 @@ impl GpuBox {
         };
         let cs_module = self.shader_from_file_bytes(wgpu::include_spirv!("bmm.spv"));
 
+
         let output_shape = vec![input_data_a_view.shape()[0], input_data_a_view.shape()[2], input_data_b_view.shape()[1]];
-        let nb_output_numbers = output_shape.iter().rev().fold(1, |acc, &x| acc * x);
+        let nb_output_numbers = GpuTensor::numel_from_shape(output_shape.as_slice()); //.iter().rev().fold(1, |acc, &x| acc * x);
         let out_buffer_store =
             self.empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
@@ -74,8 +75,6 @@ impl GpuBox {
                 z: 1,
             },
         );
-        input_data_a;
-        input_data_b;
         GpuTensor::from_buffer(out_buffer_store, output_shape)
     }
 }

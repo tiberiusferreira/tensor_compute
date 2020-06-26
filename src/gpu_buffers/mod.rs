@@ -1,5 +1,5 @@
-use crate::GpuBox;
-use wgpu::Buffer;
+use crate::{GpuBox, GpuStore};
+use wgpu::{Buffer, AdapterInfo};
 
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
@@ -17,6 +17,7 @@ impl GpuBuffer {
 
 pub struct GpuBuffer {
     buffer: Buffer,
+    device: AdapterInfo,
     size_bytes: usize,
     staging_output: bool,
 }
@@ -27,6 +28,9 @@ impl GpuBuffer {
     }
     pub fn size_bytes(&self) -> usize {
         self.size_bytes
+    }
+    pub fn device(&self) -> &AdapterInfo {
+        &self.device
     }
     pub fn staging_output(&self) -> bool {
         self.staging_output
@@ -47,6 +51,7 @@ impl GpuBox {
             buffer,
             size_bytes: size,
             staging_output: true,
+            device: self.info.clone()
         }
     }
 
@@ -62,6 +67,7 @@ impl GpuBox {
             buffer,
             size_bytes: input_bytes.len(),
             staging_output: false,
+            device: self.info.clone()
         }
     }
 
@@ -79,6 +85,7 @@ impl GpuBox {
             buffer,
             size_bytes: size,
             staging_output: false,
+            device: self.info.clone()
         }
     }
 }
