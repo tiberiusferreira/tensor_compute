@@ -1,5 +1,4 @@
-use crate::{GpuBox, GpuTensor};
-
+use crate::{GpuInstance, GpuTensor};
 
 #[derive(Debug)]
 pub struct CpuTensor {
@@ -20,13 +19,13 @@ impl CpuTensor {
 }
 
 impl CpuTensor {
-    pub fn to_gpu(&self, gpu: &GpuBox) -> GpuTensor {
+    pub fn to_gpu(&self, gpu: &GpuInstance) -> GpuTensor {
         GpuTensor::from_buffer(
             gpu.gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
             self.shape.clone(),
         )
     }
-    pub fn data_slice(&self) -> &[f32]{
+    pub fn data_slice(&self) -> &[f32] {
         self.data.as_slice()
     }
 }

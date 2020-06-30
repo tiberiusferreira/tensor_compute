@@ -1,5 +1,12 @@
-use crate::{GpuBox, GpuStore};
-use wgpu::{Buffer, AdapterInfo};
+use crate::GpuInstance;
+use wgpu::{AdapterInfo, Buffer};
+
+pub struct GpuBuffer {
+    buffer: Buffer,
+    device: AdapterInfo,
+    size_bytes: usize,
+    staging_output: bool,
+}
 
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
@@ -8,18 +15,11 @@ impl GpuBuffer {
             wgpu::ShaderStage::COMPUTE,
             wgpu::BindingType::StorageBuffer {
                 dynamic: false,
-                min_binding_size: wgpu::NonZeroBufferAddress::new(4),
+                min_binding_size: wgpu::BufferSize::new(4),
                 readonly: false,
             },
         )
     }
-}
-
-pub struct GpuBuffer {
-    buffer: Buffer,
-    device: AdapterInfo,
-    size_bytes: usize,
-    staging_output: bool,
 }
 
 impl GpuBuffer {
@@ -37,11 +37,11 @@ impl GpuBuffer {
     }
 }
 
-impl GpuBox {
+impl GpuInstance {
     /// A Buffer which can be COPIED to from other buffers MAPPED to readonly CPU memory
     /// This is needed because we cant read STORAGE buffers directly
     pub fn staging_output_buffer(&self, size: usize) -> GpuBuffer {
-        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+        let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: size as u64,
             usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
@@ -51,7 +51,7 @@ impl GpuBox {
             buffer,
             size_bytes: size,
             staging_output: true,
-            device: self.info.clone()
+            device: self.info().clone(),
         }
     }
 
@@ -59,7 +59,7 @@ impl GpuBox {
     /// it into host-visible memory, copies data from the given slice,
     /// and finally unmaps it, returning a [`Buffer`].
     pub fn gpu_buffer_from_data(&self, input_bytes: &[u8]) -> GpuBuffer {
-        let buffer = self.device.create_buffer_with_data(
+        let buffer = self.device().create_buffer_with_data(
             input_bytes,
             wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
         );
@@ -67,7 +67,7 @@ impl GpuBox {
             buffer,
             size_bytes: input_bytes.len(),
             staging_output: false,
-            device: self.info.clone()
+            device: self.info().clone(),
         }
     }
 
@@ -75,7 +75,7 @@ impl GpuBox {
     /// One used case if to accumulate results of a computation in it and copy them to an
     /// output staging buffer
     pub fn empty_gpu_buffer(&self, size: usize) -> GpuBuffer {
-        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+        let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: size as u64,
             usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
@@ -85,7 +85,7 @@ impl GpuBox {
             buffer,
             size_bytes: size,
             staging_output: false,
-            device: self.info.clone()
+            device: self.info().clone(),
         }
     }
 }

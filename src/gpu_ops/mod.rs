@@ -1,5 +1,4 @@
-mod bmm;
-pub use bmm::*;
+mod mm;
+pub use mm::*;
 mod relu;
 pub use relu::*;
-

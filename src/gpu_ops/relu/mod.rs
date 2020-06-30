@@ -1,10 +1,9 @@
 use crate::shader_runner::{ShaderInput, ThreadGroup};
-use crate::{GpuBox, GpuTensor, Tensor};
-use zerocopy::{AsBytes, FromBytes};
+use crate::{GpuInstance, GpuTensor, Tensor};
 #[cfg(test)]
 mod tests;
 
-impl GpuBox {
+impl GpuInstance {
     pub async fn relu(&self, data: &GpuTensor) -> GpuTensor {
         let cs_module = self.shader_from_file_bytes(wgpu::include_spirv!("relu.spv"));
 

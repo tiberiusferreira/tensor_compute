@@ -1,7 +1,23 @@
 use crate::gpu_buffers::GpuBuffer;
-use crate::GpuTensorView;
+use crate::GpuTensor;
 
-impl <'a> GpuTensorView<'a>{
+pub struct GpuTensorView<'a> {
+    buffer: &'a GpuBuffer,
+    shape: Vec<usize>,
+    strides: Vec<usize>,
+}
+
+/// Used to temporarily modify how the underlying tensor data is interpreted, by changing the
+/// tensor shape or strides for example
+impl<'a> GpuTensorView<'a> {
+    pub fn new(gpu_tensor: &'a GpuTensor, shape: Vec<usize>, strides: Vec<usize>) -> Self {
+        Self {
+            buffer: gpu_tensor.storage(),
+            shape,
+            strides,
+        }
+    }
+
     pub fn buffer(&self) -> &'a GpuBuffer {
         &self.buffer
     }
@@ -10,7 +26,6 @@ impl <'a> GpuTensorView<'a>{
         self.buffer.size_bytes()
     }
 
-
     pub fn shape(&self) -> &[usize] {
         &self.shape
     }
@@ -18,5 +33,4 @@ impl <'a> GpuTensorView<'a>{
     pub fn strides(&self) -> Vec<usize> {
         self.strides.to_vec()
     }
-
 }

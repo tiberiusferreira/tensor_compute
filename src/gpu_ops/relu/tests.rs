@@ -1,4 +1,4 @@
-use crate::{GpuBox};
+use crate::GpuInstance;
 
 #[test]
 fn relu_1d() {

@@ -1,7 +1,7 @@
 mod tests;
 
 use crate::shader_runner::{ShaderInput, ThreadGroup};
-use crate::{GpuBox, GpuTensor, Tensor};
+use crate::{GpuInstance, GpuTensor, Tensor};
 use zerocopy::{AsBytes, FromBytes};
 
 #[repr(C)]
@@ -20,14 +20,14 @@ struct Shapes {
     stride_cols_b: u32,
 }
 
-impl GpuBox {
+impl GpuInstance {
     /// Performs Batch Matrix Multiplication of the input Tensors.
-    pub async fn bmm(&self, input_data_a: &GpuTensor, input_data_b: &GpuTensor) -> GpuTensor {
+    pub async fn mm(&self, input_data_a: &GpuTensor, input_data_b: &GpuTensor) -> GpuTensor {
         let (input_data_a_view, input_data_b_view) = input_data_a.broadcast(input_data_b).unwrap();
         assert_eq!(input_data_a_view.shape().len(), 3);
         assert_eq!(input_data_b_view.shape().len(), 3);
         assert_eq!(input_data_a_view.shape()[0], input_data_b_view.shape()[0]);
-        let shapes = Shapes{
+        let shapes = Shapes {
             batch_size: input_data_a_view.shape()[0] as u32,
             stride_batch_size_a: input_data_a_view.strides()[0] as u32,
             stride_batch_size_b: input_data_b_view.strides()[0] as u32,
@@ -38,12 +38,15 @@ impl GpuBox {
             rows_b: input_data_b_view.shape()[1] as u32,
             stride_rows_b: input_data_b_view.strides()[1] as u32,
             cols_b: input_data_b_view.shape()[2] as u32,
-            stride_cols_b: input_data_b_view.strides()[2] as u32
+            stride_cols_b: input_data_b_view.strides()[2] as u32,
         };
-        let cs_module = self.shader_from_file_bytes(wgpu::include_spirv!("bmm.spv"));
+        let cs_module = self.shader_from_file_bytes(wgpu::include_spirv!("mm.spv"));
 
-
-        let output_shape = vec![input_data_a_view.shape()[0], input_data_a_view.shape()[2], input_data_b_view.shape()[1]];
+        let output_shape = vec![
+            input_data_a_view.shape()[0],
+            input_data_a_view.shape()[2],
+            input_data_b_view.shape()[1],
+        ];
         let nb_output_numbers = GpuTensor::numel_from_shape(output_shape.as_slice()); //.iter().rev().fold(1, |acc, &x| acc * x);
         let out_buffer_store =
             self.empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
