@@ -9,7 +9,7 @@ impl GpuInstance {
 
         let nb_output_numbers = data.numel();
         let out_buffer_store =
-            self.empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
+            self.new_empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
 
         self.run_shader(
             &cs_module,

@@ -21,7 +21,7 @@ impl CpuTensor {
 impl CpuTensor {
     pub fn to_gpu(&self, gpu: &GpuInstance) -> GpuTensor {
         GpuTensor::from_buffer(
-            gpu.gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
+            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
             self.shape.clone(),
         )
     }

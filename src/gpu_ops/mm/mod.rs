@@ -20,6 +20,7 @@ struct Shapes {
     stride_cols_b: u32,
 }
 
+
 impl GpuInstance {
     /// Performs Batch Matrix Multiplication of the input Tensors.
     pub async fn mm(&self, input_data_a: &GpuTensor, input_data_b: &GpuTensor) -> GpuTensor {
@@ -47,11 +48,11 @@ impl GpuInstance {
             input_data_a_view.shape()[2],
             input_data_b_view.shape()[1],
         ];
-        let nb_output_numbers = GpuTensor::numel_from_shape(output_shape.as_slice()); //.iter().rev().fold(1, |acc, &x| acc * x);
+        let nb_output_numbers = GpuTensor::numel_from_shape(output_shape.as_slice());
         let out_buffer_store =
-            self.empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+            self.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
-        let input_structure_data = self.gpu_buffer_from_data(shapes.as_bytes());
+        let input_structure_data = self.new_gpu_buffer_from_data(shapes.as_bytes());
         self.run_shader(
             &cs_module,
             vec![

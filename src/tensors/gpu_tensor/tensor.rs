@@ -1,5 +1,5 @@
 use crate::gpu_buffers::GpuBuffer;
-use crate::{CpuTensor, GpuInstance, GpuStore, GpuTensorView, Tensor, GpuTensor};
+use crate::{CpuTensor, GpuInstance, GpuStore, GpuTensor, GpuTensorView, Tensor};
 use std::convert::TryInto;
 use std::fmt::{Debug, Formatter};
 
@@ -11,7 +11,6 @@ impl Debug for GpuTensor {
             .finish()
     }
 }
-
 
 // Internal use impls
 impl GpuTensor {
@@ -78,7 +77,7 @@ impl GpuTensor {
         ))
     }
 
-    pub (in super) fn from_data_with_gpu(gpu: &GpuInstance, data: Vec<f32>, shape: Vec<usize>) -> Self {
+    pub(super) fn from_data_with_gpu(gpu: &GpuInstance, data: Vec<f32>, shape: Vec<usize>) -> Self {
         let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
         assert_eq!(
             calc_size,
@@ -88,10 +87,12 @@ impl GpuTensor {
         CpuTensor::new(data, shape).to_gpu(gpu)
     }
 
-
-
     pub fn from_buffer(buffer: GpuBuffer, shape: Vec<usize>) -> Self {
-        Self { buffer, shape: shape.clone(), strides: Self::strides_from_shape(shape.as_slice()) }
+        Self {
+            buffer,
+            shape: shape.clone(),
+            strides: Self::strides_from_shape(shape.as_slice()),
+        }
     }
 
     pub fn strides_from_shape(shape: &[usize]) -> Vec<usize> {
@@ -105,47 +106,8 @@ impl GpuTensor {
         strides
     }
 
-
     pub async fn to_cpu_with_gpu(&self, gpu: &GpuInstance) -> CpuTensor {
-        let cpu_readable_output_buffer = gpu.staging_output_buffer(self.buffer_size_in_bytes());
-
-        let mut encoder = gpu
-            .device()
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
-        encoder.copy_buffer_to_buffer(
-            self.storage().raw_buffer(),
-            0,
-            &cpu_readable_output_buffer.raw_buffer(),
-            0,
-            self.buffer_size_in_bytes() as u64,
-        );
-
-        gpu.queue().submit(Some(encoder.finish()));
-
-        let buffer_slice_a = cpu_readable_output_buffer.raw_buffer().slice(..);
-        let buffer_future_a = buffer_slice_a.map_async(wgpu::MapMode::Read);
-
-        // Poll the device in a blocking manner so that our future resolves.
-        // In an actual application, `device.poll(...)` should
-        // be called in an event loop or on another thread.
-        gpu.device().poll(wgpu::Maintain::Wait);
-
-        if let Ok(()) = buffer_future_a.await {
-            let data = buffer_slice_a.get_mapped_range();
-
-            let result: Vec<f32> = data
-                .chunks_exact(std::mem::size_of::<f32>())
-                .map(|b| f32::from_ne_bytes(b.try_into().unwrap()))
-                .collect();
-
-            // With the current interface, we have to make sure all mapped views are
-            // dropped before we unmap the buffer.
-            drop(data);
-            cpu_readable_output_buffer.raw_buffer().unmap();
-            CpuTensor::new(result, self.shape.clone())
-        } else {
-            panic!("Could not transfer data to CPU!")
-        }
+        let buffer_in_cpu_mem = gpu.copy_to_cpu_mem(self.storage()).await;
+        CpuTensor::new(buffer_in_cpu_mem, self.shape.clone())
     }
 }

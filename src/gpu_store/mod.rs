@@ -1,3 +1,4 @@
+use crate::GpuInstance;
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
 use wgpu::{AdapterInfo, Device, Queue};
@@ -7,26 +8,6 @@ static DEVICES: Lazy<GpuStore> = Lazy::new(|| {
     std::thread::spawn(move || s.send(futures::executor::block_on(GpuStore::new())));
     r.recv().unwrap()
 });
-
-pub struct GpuInstance {
-    device: Device,
-    queue: Queue,
-    info: AdapterInfo,
-}
-
-impl GpuInstance {
-    pub fn device(&self) -> &Device {
-        &self.device
-    }
-
-    pub fn queue(&self) -> &Queue {
-        &self.queue
-    }
-
-    pub fn info(&self) -> &AdapterInfo {
-        &self.info
-    }
-}
 
 pub struct GpuStore {
     // Yes, I could use atomics here, but its just a prototype for now
@@ -43,7 +24,7 @@ impl GpuStore {
         let new_val = (&DEVICES)
             .available_devices
             .iter()
-            .position(|gpu| &gpu.info == id)
+            .position(|gpu| gpu.info() == id)
             .unwrap();
         let mut lock = DEVICES.current_default.write().unwrap();
         *lock = new_val;
@@ -53,43 +34,44 @@ impl GpuStore {
         &DEVICES
             .available_devices
             .iter()
-            .find(|&gpu| &gpu.info == id)
+            .find(|&gpu| gpu.info() == id)
             .unwrap()
     }
 
     pub fn list_gpus() -> Vec<&'static AdapterInfo> {
         (&DEVICES.available_devices)
             .iter()
-            .map(|gpu| &gpu.info)
+            .map(|gpu| gpu.info())
             .collect()
     }
 
     async fn new() -> Self {
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-        let mut available_devices: Vec<GpuInstance> = vec![];
-        for adapter in
-            instance.enumerate_adapters(wgpu::UnsafeFeatures::disallow(), wgpu::BackendBit::PRIMARY)
-        {
-            let (device, queue) = adapter
-                .request_device(
-                    &wgpu::DeviceDescriptor {
-                        features: wgpu::Features::empty(),
-                        limits: wgpu::Limits::default(),
-                        shader_validation: true,
-                    },
-                    None,
-                )
-                .await
-                .unwrap();
-            available_devices.push(GpuInstance {
-                device,
-                queue,
-                info: adapter.get_info(),
-            });
-        }
-        GpuStore {
-            current_default: RwLock::new(0),
-            available_devices,
-        }
+        // let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        // let mut available_devices: Vec<GpuInstance> = vec![];
+        // for adapter in
+        //     instance.enumerate_adapters(wgpu::UnsafeFeatures::disallow(), wgpu::BackendBit::PRIMARY)
+        // {
+        //     let (device, queue) = adapter
+        //         .request_device(
+        //             &wgpu::DeviceDescriptor {
+        //                 features: wgpu::Features::empty(),
+        //                 limits: wgpu::Limits::default(),
+        //                 shader_validation: true,
+        //             },
+        //             None,
+        //         )
+        //         .await
+        //         .unwrap();
+        //     available_devices.push(GpuInstance {
+        //         device,
+        //         queue,
+        //         info: adapter.get_info(),
+        //     });
+        // }
+        // GpuStore {
+        //     current_default: RwLock::new(0),
+        //     available_devices,
+        // }
+        unimplemented!()
     }
 }
