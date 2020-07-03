@@ -1,12 +1,10 @@
-use crate::gpu_buffers::GpuBuffer;
-use crate::tensors::CpuTensor;
-use crate::{GpuInstance, GpuStore, Tensor};
 mod external_api;
 mod tensor;
 pub use external_api::*;
 mod tensor_view;
-use std::fmt::{Debug, Formatter};
+use crate::gpu_internals::gpu_buffers::GpuBuffer;
 pub use tensor_view::*;
+mod gpu_ops;
 
 pub struct GpuTensor {
     buffer: GpuBuffer,

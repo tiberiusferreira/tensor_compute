@@ -1,8 +1,8 @@
 use wgpu::{AdapterInfo, Device, Queue};
 
 pub mod gpu_buffers;
+pub mod gpu_factory;
 pub mod shader_runner;
-mod gpu_factory;
 
 pub type GpuInfo = AdapterInfo;
 
@@ -14,9 +14,8 @@ pub struct GpuInstance {
     info: AdapterInfo,
 }
 
-
 impl GpuInstance {
-     fn device(&self) -> &Device {
+    fn device(&self) -> &Device {
         &self.device
     }
 

@@ -1,7 +1,6 @@
-use crate::GpuInstance;
+use crate::gpu_internals::{GpuInfo, GpuInstance};
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
-use wgpu::{AdapterInfo, Device, Queue};
 
 static DEVICES: Lazy<GpuStore> = Lazy::new(|| {
     let (s, r) = std::sync::mpsc::channel();
@@ -10,68 +9,44 @@ static DEVICES: Lazy<GpuStore> = Lazy::new(|| {
 });
 
 pub struct GpuStore {
-    // Yes, I could use atomics here, but its just a prototype for now
-    current_default: RwLock<usize>,
+    current: RwLock<usize>,
     available_devices: Vec<GpuInstance>,
 }
 
 impl GpuStore {
     pub fn get_default() -> &'static GpuInstance {
-        &DEVICES.available_devices[*DEVICES.current_default.read().unwrap()]
+        let current_idx = DEVICES.current.read().unwrap();
+        &DEVICES.available_devices[*current_idx]
     }
 
-    pub fn set_default(id: &AdapterInfo) {
-        let new_val = (&DEVICES)
-            .available_devices
-            .iter()
-            .position(|gpu| gpu.info() == id)
-            .unwrap();
-        let mut lock = DEVICES.current_default.write().unwrap();
-        *lock = new_val;
+    pub fn get(gpu_info: &GpuInfo) -> &'static GpuInstance {
+        DEVICES.available_devices.iter().find(|dev| dev.info() == gpu_info).unwrap()
     }
 
-    pub fn get(id: &AdapterInfo) -> &GpuInstance {
-        &DEVICES
-            .available_devices
-            .iter()
-            .find(|&gpu| gpu.info() == id)
-            .unwrap()
+    pub async fn select_gpu(gpu_info: &GpuInfo) {
+        let idx = DEVICES.available_devices.iter().position(|dev| dev.info() == gpu_info).unwrap();
+        *(&DEVICES.current).write().unwrap() = idx;
     }
 
-    pub fn list_gpus() -> Vec<&'static AdapterInfo> {
-        (&DEVICES.available_devices)
-            .iter()
-            .map(|gpu| gpu.info())
-            .collect()
+    pub fn list_gpus() -> Vec<&'static GpuInfo> {
+        (&DEVICES).available_devices.iter().map(|dev| dev.info()).collect()
     }
 
     async fn new() -> Self {
-        // let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-        // let mut available_devices: Vec<GpuInstance> = vec![];
-        // for adapter in
-        //     instance.enumerate_adapters(wgpu::UnsafeFeatures::disallow(), wgpu::BackendBit::PRIMARY)
-        // {
-        //     let (device, queue) = adapter
-        //         .request_device(
-        //             &wgpu::DeviceDescriptor {
-        //                 features: wgpu::Features::empty(),
-        //                 limits: wgpu::Limits::default(),
-        //                 shader_validation: true,
-        //             },
-        //             None,
-        //         )
-        //         .await
-        //         .unwrap();
-        //     available_devices.push(GpuInstance {
-        //         device,
-        //         queue,
-        //         info: adapter.get_info(),
-        //     });
-        // }
-        // GpuStore {
-        //     current_default: RwLock::new(0),
-        //     available_devices,
-        // }
-        unimplemented!()
+        let gpu_factory = crate::gpu_internals::gpu_factory::GpuFactory::new().await;
+
+        let gpu_list = gpu_factory
+            .list_gpus()
+            .await;
+
+        let mut gpu_instances = vec![];
+        for gpu_info in &gpu_list{
+            gpu_instances.push(gpu_factory.request_gpu(&gpu_info).await);
+        }
+        assert!(!gpu_instances.is_empty(), "No GPU detected!");
+        Self {
+            current: RwLock::new(0),
+            available_devices: gpu_instances,
+        }
     }
 }

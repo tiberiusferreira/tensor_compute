@@ -1,5 +1,5 @@
-use crate::gpu_buffers::GpuBuffer;
-use crate::{CpuTensor, GpuInstance, GpuStore, GpuTensor, Tensor};
+use crate::gpu_internals::GpuInstance;
+use crate::{CpuTensor, GpuStore, GpuTensor, Tensor};
 
 impl GpuTensor {
     fn get_gpu(&self) -> &GpuInstance {
@@ -8,7 +8,7 @@ impl GpuTensor {
 
     pub async fn mm(&self, other: &Self) -> Self {
         let gpu = self.get_gpu();
-        gpu.mm(self, other).await
+        super::gpu_ops::mm(gpu, self, other).await
     }
 
     pub async fn to_cpu(&self) -> CpuTensor {

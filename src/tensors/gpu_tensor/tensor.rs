@@ -1,6 +1,6 @@
-use crate::gpu_buffers::GpuBuffer;
-use crate::{CpuTensor, GpuInstance, GpuStore, GpuTensor, GpuTensorView, Tensor};
-use std::convert::TryInto;
+use crate::gpu_internals::gpu_buffers::GpuBuffer;
+use crate::gpu_internals::GpuInstance;
+use crate::{CpuTensor, GpuTensor, GpuTensorView, Tensor};
 use std::fmt::{Debug, Formatter};
 
 impl Debug for GpuTensor {
@@ -107,7 +107,7 @@ impl GpuTensor {
     }
 
     pub async fn to_cpu_with_gpu(&self, gpu: &GpuInstance) -> CpuTensor {
-        let buffer_in_cpu_mem = gpu.copy_to_cpu_mem(self.storage()).await;
+        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.storage()).await;
         CpuTensor::new(buffer_in_cpu_mem, self.shape.clone())
     }
 }

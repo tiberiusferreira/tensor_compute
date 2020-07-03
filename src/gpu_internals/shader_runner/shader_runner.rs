@@ -1,6 +1,5 @@
-use crate::gpu_buffers::GpuBuffer;
-
-use crate::GpuInstance;
+use crate::gpu_internals::gpu_buffers::GpuBuffer;
+use crate::gpu_internals::GpuInstance;
 use wgpu::{BindGroupLayoutEntry, Binding, ShaderModule};
 
 pub struct ShaderInput<'a> {
@@ -16,7 +15,7 @@ impl<'a> ShaderInput<'a> {
     pub fn to_bind_group(&self) -> Binding {
         Binding {
             binding: self.binding_id as u32,
-            resource: wgpu::BindingResource::Buffer(self.gpu_buffer.raw_buffer().slice(..)),
+            resource: self.gpu_buffer.to_bind_resource(),
         }
     }
 }

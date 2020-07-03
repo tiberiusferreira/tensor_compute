@@ -1,5 +1,5 @@
 mod shader_runner;
-use crate::GpuInstance;
+use crate::gpu_internals::GpuInstance;
 pub use shader_runner::*;
 use wgpu::{ShaderModule, ShaderModuleSource};
 

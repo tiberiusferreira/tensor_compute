@@ -1,5 +1,7 @@
-use crate::shader_runner::{ShaderInput, ThreadGroup};
-use crate::{GpuInstance, GpuTensor, Tensor};
+use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
+use crate::gpu_internals::GpuInstance;
+use crate::{GpuTensor, Tensor};
+
 #[cfg(test)]
 mod tests;
 

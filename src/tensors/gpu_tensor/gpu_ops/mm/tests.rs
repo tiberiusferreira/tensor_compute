@@ -1,4 +1,3 @@
-use crate::GpuTensor;
 
 #[test]
 fn basic_broadcasting() {

@@ -1,4 +1,5 @@
-use crate::{GpuInstance, GpuTensor};
+use crate::gpu_internals::GpuInstance;
+use crate::GpuTensor;
 
 #[derive(Debug)]
 pub struct CpuTensor {

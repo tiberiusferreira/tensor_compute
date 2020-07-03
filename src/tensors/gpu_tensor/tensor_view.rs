@@ -1,4 +1,4 @@
-use crate::gpu_buffers::GpuBuffer;
+use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::GpuTensor;
 
 pub struct GpuTensorView<'a> {

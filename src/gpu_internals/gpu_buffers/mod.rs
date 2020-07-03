@@ -1,6 +1,6 @@
-use crate::GpuInstance;
-use wgpu::{AdapterInfo, Buffer, Device};
+use crate::gpu_internals::GpuInstance;
 use std::convert::TryInto;
+use wgpu::{AdapterInfo, Buffer};
 
 pub struct GpuBuffer {
     /// The WebGPU buffer itself
@@ -27,9 +27,6 @@ impl GpuBuffer {
 }
 
 impl GpuBuffer {
-    pub fn raw_buffer(&self) -> &Buffer {
-        &self.buffer
-    }
     pub fn size_bytes(&self) -> usize {
         self.size_bytes
     }
@@ -38,6 +35,9 @@ impl GpuBuffer {
     }
     pub fn is_staging_output(&self) -> bool {
         self.staging_output
+    }
+    pub fn to_bind_resource(&self) -> wgpu::BindingResource {
+        wgpu::BindingResource::Buffer(self.buffer.slice(..))
     }
 }
 
@@ -93,8 +93,7 @@ impl GpuInstance {
         }
     }
 
-
-    pub async fn copy_to_cpu_mem(&self, src_buffer: &GpuBuffer) -> Vec<f32>{
+    pub async fn copy_buffer_to_cpu_mem(&self, src_buffer: &GpuBuffer) -> Vec<f32> {
         let gpu = self;
         let cpu_readable_output_buffer = gpu.new_staging_output_buffer(src_buffer.size_bytes());
 
@@ -103,16 +102,16 @@ impl GpuInstance {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
         encoder.copy_buffer_to_buffer(
-            src_buffer.raw_buffer(),
+            &src_buffer.buffer,
             0,
-            &cpu_readable_output_buffer.raw_buffer(),
+            &cpu_readable_output_buffer.buffer,
             0,
             src_buffer.size_bytes() as u64,
         );
 
         gpu.queue().submit(Some(encoder.finish()));
 
-        let buffer_slice_a = cpu_readable_output_buffer.raw_buffer().slice(..);
+        let buffer_slice_a = cpu_readable_output_buffer.buffer.slice(..);
         let buffer_future_a = buffer_slice_a.map_async(wgpu::MapMode::Read);
 
         // Poll the device in a blocking manner so that our future resolves.
@@ -131,7 +130,7 @@ impl GpuInstance {
             // With the current interface, we have to make sure all mapped views are
             // dropped before we unmap the buffer.
             drop(data);
-            cpu_readable_output_buffer.raw_buffer().unmap();
+            cpu_readable_output_buffer.buffer.unmap();
             result
         } else {
             panic!("Could not transfer data to CPU!")
