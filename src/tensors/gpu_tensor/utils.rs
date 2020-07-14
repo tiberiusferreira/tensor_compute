@@ -1,17 +1,5 @@
 use std::collections::VecDeque;
 
-pub fn strides_from_shape(shape: &[usize]) -> Vec<usize> {
-    let mut strides = vec![];
-    strides.push(1);
-    for dim in shape.iter().skip(1).rev() {
-        let biggest_stride = strides.last().unwrap().clone();
-        strides.push(dim * biggest_stride)
-    }
-    strides.reverse();
-    strides
-}
-
-
 pub fn strides_from_deque_shape(shape: &VecDeque<usize>) -> VecDeque<usize> {
     let mut strides = VecDeque::new();
     strides.push_back(1);

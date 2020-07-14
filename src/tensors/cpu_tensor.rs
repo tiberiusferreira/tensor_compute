@@ -1,6 +1,5 @@
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, Tensor};
-use crate::utils::strides_from_shape;
 use std::fmt::{Display, Formatter, Write, Debug};
 use std::collections::VecDeque;
 use crate::utils::strides_from_deque_shape;

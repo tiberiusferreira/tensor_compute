@@ -56,14 +56,7 @@ pub async fn transpose(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
         },
     );
     let mut shape = data.shape().clone();
-    // swap_last_two_els(&mut shape);
     shape.swap(shape.len()-2, shape.len()-1);
     GpuTensor::from_buffer(out_buffer_store, shape.clone())
 }
 
-fn swap_last_two_els(vec: &mut Vec<usize>){
-    let len = vec.len();
-    let temp = vec[len-1];
-    vec[len-1] = vec[len-2];
-    vec[len-2] = temp;
-}
