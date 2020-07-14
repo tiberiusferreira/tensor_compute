@@ -4,6 +4,7 @@ use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, Tensor};
 use zerocopy::{AsBytes, FromBytes};
+use std::collections::VecDeque;
 
 #[repr(C)]
 #[derive(AsBytes, FromBytes, Clone, Debug)]
@@ -51,7 +52,7 @@ pub async fn mm(
         input_data_a_view.shape()[2],
         input_data_b_view.shape()[1],
     ];
-    let nb_output_numbers = GpuTensor::numel_from_shape(output_shape.as_slice());
+    let nb_output_numbers = GpuTensor::numel_from_shape(&VecDeque::from(output_shape.clone()));
     let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
     let input_structure_data = gpu.new_gpu_buffer_from_data(shapes.as_bytes());
@@ -81,5 +82,5 @@ pub async fn mm(
             z: 1,
         },
     );
-    GpuTensor::from_buffer(out_buffer_store, output_shape)
+    GpuTensor::from_buffer(out_buffer_store, VecDeque::from(output_shape))
 }

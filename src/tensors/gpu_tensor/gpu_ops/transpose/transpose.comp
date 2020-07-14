@@ -1,0 +1,50 @@
+#version 450
+layout(local_size_x = 1) in;
+
+readonly layout(set = 0, binding = 0) buffer Tensor {
+     float[] data;
+};
+
+layout(set = 0, binding = 1) buffer TensorShape {
+    uint[] shapes;
+};
+
+layout(set = 0, binding = 2) buffer TensorStrides {
+    uint[] strides;
+};
+
+layout(set = 0, binding = 3) buffer ShapeLen {
+    uint shape_len;
+};
+
+layout(set = 0, binding = 4) buffer Out {
+    float[] out_buffer;
+};
+
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+
+    uint offset = 0;
+    uint remainer = index;
+
+    for (uint shape_idx = 0; shape_idx < shape_len-2; shape_idx++){
+        uint idx = remainer / strides[shape_idx];
+        remainer = remainer % strides[shape_idx];
+        offset = offset + idx * strides[shape_idx];
+    }
+
+
+    uint last_minus_1_idx = remainer / strides[shape_len-2];
+    uint last_idx = remainer % strides[shape_len-2];
+
+    uint[] new_stride;
+    new_stride[1] = 1;
+    new_stride[0] = shapes[shape_len-2];
+
+    uint new_lin_idx = last_idx*new_stride[0] + last_minus_1_idx * new_stride[1];
+
+    out_buffer[offset+new_lin_idx] = data[index];
+}
+
+

@@ -1,16 +1,16 @@
 #version 450
 layout(local_size_x = 1) in;
 
-readonly layout(set = 0, binding = 0) buffer Ma {
-    float[] indices_a;
+readonly layout(set = 0, binding = 0) buffer TensorA {
+    float[] tensor_a;
 };
 
-readonly layout(set = 0, binding = 1) buffer Mb {
-    float[] indices_b;
+readonly layout(set = 0, binding = 1) buffer TensorB {
+    float[] tensor_b;
 };
 
-layout(set = 0, binding = 2) buffer Out {
-    float[] indices_out;
+layout(set = 0, binding = 2) buffer TensorOut {
+    float[] tensor_out;
 };
 
 readonly layout(set = 0, binding = 3) buffer MatricesData {

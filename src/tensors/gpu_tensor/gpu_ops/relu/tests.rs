@@ -1,12 +1,11 @@
-use crate::GpuInstance;
+use crate::GpuTensor;
 
 #[test]
-fn relu_1d() {
-    // let async_block = async {
-    //     let gpu = GpuBox::new().await;
-    //     let ma = Gpu2DTensor::new(&gpu, vec![1., 2., 3., 4.], (2, 2));
-    //     let cpu_copy = times.to_cpu(&gpu).await;
-    //     println!("{:?}", cpu_copy);
-    // };
-    // futures::executor::block_on(async_block);
+fn leaky_relu() {
+    let async_block = async {
+        let tensor = GpuTensor::from_data(vec![-1., -2., -3., -4., 5., 6.], vec![3, 2]);
+        let result = tensor.leaky_relu(0.1).await;
+        assert_eq!(result.to_cpu().await.data_slice(), &[-0.1, -0.2, -0.3, -0.4, 5., 6.]);
+    };
+    futures::executor::block_on(async_block);
 }
