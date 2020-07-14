@@ -2,7 +2,6 @@ use crate::{GpuTensor, Tensor};
 use std::collections::VecDeque;
 
 impl GpuTensor {
-
     //
     // pub fn expand(&mut self, shape: Vec<usize>) {
     //     assert!(
@@ -26,7 +25,7 @@ impl GpuTensor {
 
     // TODO! We need to check if we have 0 strides, if we do, we cant avoid copying
     pub fn reshape(&mut self, shape: Vec<usize>) {
-        for stride in &self.strides {
+        for stride in self.strides() {
             if *stride == 0 {
                 panic!("Cant reshape tensor with stride 0");
             }
@@ -37,7 +36,6 @@ impl GpuTensor {
             self.numel(),
             "Shape is not valid for the size of the data!"
         );
-        self.shape = VecDeque::from(shape);
+        self.dim_stride.shape = VecDeque::from(shape);
     }
 }
-

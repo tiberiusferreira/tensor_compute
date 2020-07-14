@@ -2,9 +2,9 @@ mod tests;
 
 use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, Tensor};
-use zerocopy::{AsBytes, FromBytes};
+use crate::{GpuTensor, GpuTensorView, Tensor};
 use std::collections::VecDeque;
+use zerocopy::{AsBytes, FromBytes};
 
 #[repr(C)]
 #[derive(AsBytes, FromBytes, Clone, Debug)]
@@ -23,15 +23,17 @@ struct Shapes {
 }
 
 /// Performs Batch Matrix Multiplication of the input Tensors.
-pub async fn mm(
+/// Expects inputs to be of Rank 3, have same batch size and compatible dimensions
+pub async fn bmm_kernel<'a>(
     gpu: &GpuInstance,
-    input_data_a: &GpuTensor,
-    input_data_b: &GpuTensor,
+    input_data_a_view: &GpuTensorView<'a>,
+    input_data_b_view: &GpuTensorView<'a>,
 ) -> GpuTensor {
-    let (input_data_a_view, input_data_b_view) = input_data_a.broadcast(input_data_b).unwrap();
+    // let (input_data_a_view, input_data_b_view) = (input_data_a.view(), input_data_b.view());
     assert_eq!(input_data_a_view.shape().len(), 3);
     assert_eq!(input_data_b_view.shape().len(), 3);
     assert_eq!(input_data_a_view.shape()[0], input_data_b_view.shape()[0]);
+
     let shapes = Shapes {
         batch_size: input_data_a_view.shape()[0] as u32,
         stride_batch_size_a: input_data_a_view.strides()[0] as u32,
@@ -49,8 +51,8 @@ pub async fn mm(
 
     let output_shape = vec![
         input_data_a_view.shape()[0],
-        input_data_a_view.shape()[2],
-        input_data_b_view.shape()[1],
+        input_data_a_view.shape()[1],
+        input_data_b_view.shape()[2],
     ];
     let nb_output_numbers = GpuTensor::numel_from_shape(&VecDeque::from(output_shape.clone()));
     let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);

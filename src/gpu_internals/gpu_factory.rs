@@ -14,9 +14,7 @@ impl GpuFactory {
         let adapters: Vec<wgpu::Adapter> = wgpu_instance
             .enumerate_adapters(wgpu::UnsafeFeatures::disallow(), wgpu::BackendBit::PRIMARY)
             .collect();
-        GpuFactory {
-            adapters,
-        }
+        GpuFactory { adapters }
     }
 
     pub async fn list_gpus(&self) -> Vec<GpuInfo> {

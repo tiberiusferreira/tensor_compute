@@ -10,8 +10,7 @@ pub async fn leaky_relu(gpu: &GpuInstance, data: &GpuTensor, leakage: f32) -> Gp
 
     let leakage_as_tensor = GpuTensor::from_scalar(leakage);
     let nb_output_numbers = data.numel();
-    let out_buffer_store =
-        gpu.new_empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
+    let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
 
     gpu.run_shader(
         &cs_module,

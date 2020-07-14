@@ -1,22 +1,16 @@
-use crate::{GpuTensor, GpuTensorView, Tensor};
-use std::collections::VecDeque;
-use crate::utils::strides_from_deque_shape;
-#[derive(Debug, Clone)]
-struct DimStride{
-    shape: VecDeque<usize>,
-    stride: VecDeque<usize>,
-}
+use crate::{DimStride, GpuTensor, GpuTensorView};
 
-impl DimStride{
-    pub fn from_shape_vec(shape: Vec<usize>) -> Self{
-        let shape = VecDeque::from(shape);
-        DimStride{
-            shape: shape.clone(),
-            stride: strides_from_deque_shape(&shape)
-        }
+impl GpuTensor {
+    /// Increases Tensor rank artificially by appending adding one dimension to it
+    pub fn increase_rank(&self) -> GpuTensorView {
+        let mut new_dims = self.dim_stride.clone();
+        new_dims.increase_rank();
+        GpuTensorView::new(self, new_dims)
     }
-}
-impl GpuTensor{
+
+    pub fn view(&self) -> GpuTensorView {
+        GpuTensorView::new(self, self.dim_strides().clone())
+    }
 
     /// Tensor are broadcastable if:
     /// - Each tensor has at least one dimension.
@@ -30,124 +24,142 @@ impl GpuTensor{
     pub fn broadcast<'a>(
         &'a self,
         other: &'a Self,
+        skipping_dims: Option<usize>,
     ) -> Option<(GpuTensorView<'a>, GpuTensorView<'a>)> {
-
-        //
-        let mut current_shape = DimStride{
-            shape: self.shape().clone(),
-            stride: self.strides().clone()
-        };
-
-        let mut target_shape = DimStride{
-            shape: other.shape().clone(),
-            stride: other.strides().clone()
-        };
-        broadcast_shape_and_stride(&mut current_shape, &mut target_shape);
+        let current_shape = self.dim_strides();
+        let target_shape = other.dim_strides();
+        let (broadcasted_curr, broadcasted_target) =
+            broadcast_shape_and_stride(&current_shape, &target_shape, skipping_dims).unwrap();
         Some((
-            GpuTensorView::new(self, current_shape.shape.clone(), current_shape.stride.clone()),
-            GpuTensorView::new(other, target_shape.shape.clone(), target_shape.stride.clone()),
+            GpuTensorView::new(self, broadcasted_curr),
+            GpuTensorView::new(other, broadcasted_target),
         ))
-
     }
 
-    pub async fn transpose(&self) -> GpuTensor{
+    pub async fn transpose(&self) -> GpuTensor {
         use crate::tensors::gpu_tensor::gpu_ops::transpose;
         transpose(self.get_gpu(), &self).await
     }
 }
 
-fn broadcast_shape_and_stride(current: &mut DimStride, target: &mut DimStride){
-    let mut current_shape = (*current).clone();
-    let mut target_shape = (*target).clone();
-    let (larger_rank, smaller_rank) = if current_shape.shape.len() > target_shape.shape.len(){
-        (&mut current_shape, &mut target_shape)
-    }else{
-        (&mut target_shape, &mut current_shape)
+fn broadcast_shape_and_stride(
+    current: &DimStride,
+    target: &DimStride,
+    skipping_dims: Option<usize>,
+) -> Result<(DimStride, DimStride), String> {
+    let mut current = current.clone();
+    let mut target = target.clone();
+    let (larger_rank, smaller_rank) = if current.shape.len() > target.shape.len() {
+        (&mut current, &mut target)
+    } else {
+        (&mut target, &mut current)
     };
-
+    let skipping_dims = skipping_dims.unwrap_or(0);
+    assert!(
+        skipping_dims <= smaller_rank.rank(),
+        "Number of dims to skip is bigger than dims of the tensor itself!"
+    );
     // make sure shapes have the same rank by adding 1s to the front of the shorter one
     let rank_diff = larger_rank.shape.len() - smaller_rank.shape.len();
-    for _i in 0..rank_diff{
-        smaller_rank.shape.push_front(1);
-        // this is a "fake" dimension
-        smaller_rank.stride.push_front(0);
+    for _i in 0..rank_diff {
+        smaller_rank.increase_rank();
     }
     assert_eq!(smaller_rank.shape.len(), larger_rank.shape.len());
+
+    let final_rank = smaller_rank.rank();
     // Now for each dimension:
-    let (curr_shape, curr_stride) = (&mut current_shape.shape, &mut current_shape.stride);
-    let (target_shape, target_stride) = (&mut target_shape.shape, &mut target_shape.stride);
-    for (id, (current_dim, target_dim)) in curr_shape.iter_mut().zip(target_shape.iter_mut()).enumerate(){
+    let (curr_shape, curr_stride) = (&mut current.shape, &mut current.strides);
+    let (target_shape, target_stride) = (&mut target.shape, &mut target.strides);
+    for (id, (current_dim, target_dim)) in curr_shape
+        .iter_mut()
+        .zip(target_shape.iter_mut())
+        .enumerate()
+    {
+        if final_rank - id <= skipping_dims {
+            continue;
+        }
+        // id is used to modify the strides, but we need to take care of the skipped dims
+        // let id = id + skipping_dims;
         // IF they are equal -> do nothing
-        if current_dim == target_dim{
+        if current_dim == target_dim {
             continue;
         }
         // IF one of them is 1 and the other is DIM (DIM!=1) -> change dimension 1 into DIM, and
         // change strides to 0. This is OK since a stride of 0 means we will keep hitting the same
         // memory location when indexing into the expanded "fake" dimension increase
-        match (&current_dim, &target_dim){
+        match (&current_dim, &target_dim) {
             (1, targ) => {
                 *current_dim = **targ;
                 curr_stride[id] = 0;
-            },
+            }
             (curr, 1) => {
                 *target_dim = **curr;
                 target_stride[id] = 0;
-            },
+            }
             // IF they are different and neither is 1, they are not broadcastable
             _ => {
-                panic!(
+                return Err(format!(
                     "Cant broadcast between dims {} and {} .",
                     current_dim, target_dim
-                );
+                ));
             }
         }
     }
-    current.shape = curr_shape.clone();
-    current.stride = curr_stride.clone();
-    target.shape = target_shape.clone();
-    target.stride = target_stride.clone();
+    Ok((current, target))
 }
 
-
 #[test]
-pub fn simple_broadcast_works(){
-    let mut a = DimStride::from_shape_vec(vec![2, 2]); // -> [2, 2, 2]
-    let mut b = DimStride::from_shape_vec(vec![2, 2, 2]);
-    broadcast_shape_and_stride(&mut a, &mut b);
+pub fn simple_broadcast_works() {
+    let a = DimStride::from_shape_vec(vec![2, 2]); // -> [2, 2, 2]
+    let b = DimStride::from_shape_vec(vec![2, 2, 2]);
+    let (a, b) = broadcast_shape_and_stride(&a, &b, None).unwrap();
     assert_eq!(a.shape, [2, 2, 2]);
-    assert_eq!(a.stride, [0, 2, 1]);
+    assert_eq!(a.strides, [0, 2, 1]);
     assert_eq!(b.shape, [2, 2, 2]);
-    assert_eq!(b.stride, [4, 2, 1]);
+    assert_eq!(b.strides, [4, 2, 1]);
 }
 
+#[test]
+pub fn simple_broadcast_with_skipping_works() {
+    let a = DimStride::from_shape_vec(vec![2, 2]); // -> [2, 2, 2]
+    let b = DimStride::from_shape_vec(vec![2, 2, 2]);
+    let (a, b) = broadcast_shape_and_stride(&a, &b, Some(2)).unwrap();
+    assert_eq!(a.shape, [2, 2, 2]);
+    assert_eq!(a.strides, [0, 2, 1]);
+    assert_eq!(b.shape, [2, 2, 2]);
+    assert_eq!(b.strides, [4, 2, 1]);
+}
 
 #[test]
-pub fn broadcast_works_with_additional_unit_dim(){
-    let mut a = DimStride::from_shape_vec(vec![2, 2]); // -> [2, 2, 2]
-    let mut b = DimStride::from_shape_vec(vec![1, 2, 2]);
-    broadcast_shape_and_stride(&mut a, &mut b);
+pub fn broadcast_works_with_additional_unit_dim() {
+    let a = DimStride::from_shape_vec(vec![2, 2]);
+    let b = DimStride::from_shape_vec(vec![1, 2, 2]);
+    let (a, b) = broadcast_shape_and_stride(&a, &b, None).unwrap();
     assert_eq!(a.shape, [1, 2, 2]);
-    assert_eq!(a.stride, [0, 2, 1]);
+    assert_eq!(a.strides, [0, 2, 1]);
     assert_eq!(b.shape, [1, 2, 2]);
-    assert_eq!(b.stride, [4, 2, 1]);
+    assert_eq!(b.strides, [4, 2, 1]);
 }
 
-
 #[test]
-pub fn broadcast_works_from_scalar(){
-    let mut a = DimStride::from_shape_vec(vec![1]); // -> [2, 2, 2]
-    let mut b = DimStride::from_shape_vec(vec![100]);
-    broadcast_shape_and_stride(&mut a, &mut b);
+pub fn broadcast_works_from_scalar() {
+    let a = DimStride::from_shape_vec(vec![1]);
+    let b = DimStride::from_shape_vec(vec![100]);
+    let (a, b) = broadcast_shape_and_stride(&a, &b, None).unwrap();
     assert_eq!(a.shape, [100]);
-    assert_eq!(a.stride, [0]);
+    assert_eq!(a.strides, [0]);
     assert_eq!(b.shape, [100]);
-    assert_eq!(b.stride, [1]);
+    assert_eq!(b.strides, [1]);
 
-    let mut a = DimStride::from_shape_vec(vec![1, 1]); // -> [2, 2, 2]
-    let mut b = DimStride::from_shape_vec(vec![100]);
-    broadcast_shape_and_stride(&mut a, &mut b);
+    let a = DimStride::from_shape_vec(vec![1, 1]);
+    let b = DimStride::from_shape_vec(vec![100]);
+    let (a, b) = broadcast_shape_and_stride(&a, &b, None).unwrap();
     assert_eq!(a.shape, [1, 100]);
-    assert_eq!(a.stride, [1, 0]);
+    assert_eq!(a.strides, [1, 0]);
     assert_eq!(b.shape, [1, 100]);
-    assert_eq!(b.stride, [0, 1]);
+    assert_eq!(b.strides, [0, 1]);
+
+    let a = DimStride::from_shape_vec(vec![1, 2]);
+    let b = DimStride::from_shape_vec(vec![100]);
+    assert!(broadcast_shape_and_stride(&a, &b, None).is_err());
 }

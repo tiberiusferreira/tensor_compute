@@ -23,7 +23,7 @@ fn broadcast_work() {
         let a_gpu = a.to_gpu(&gpu);
         let b = CpuTensor::new(vec![1., 2., 3., 4.], vec![2, 2]);
         let b_gpu = b.to_gpu(&gpu);
-        a_gpu.broadcast(&b_gpu);
+        a_gpu.broadcast(&b_gpu, None);
         // assert_eq!(b.strides(), vec![2, 1]);
     };
     futures::executor::block_on(async_block);

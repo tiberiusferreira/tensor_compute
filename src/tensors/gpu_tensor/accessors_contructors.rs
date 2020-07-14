@@ -1,8 +1,8 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, GpuTensor, Tensor, GpuStore};
-use std::fmt::{Debug, Formatter};
+use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, Tensor};
 use std::collections::VecDeque;
+use std::fmt::{Debug, Formatter};
 
 impl Debug for GpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -40,19 +40,20 @@ impl GpuTensor {
     pub fn from_buffer(buffer: GpuBuffer, shape: VecDeque<usize>) -> Self {
         Self {
             buffer,
-            shape: shape.clone(),
-            strides: super::utils::strides_from_deque_shape(&shape),
+            dim_stride: DimStride::from_shape(shape),
         }
     }
 
-    pub fn from_buffer_with_strides(buffer: GpuBuffer, shape: VecDeque<usize>, strides: VecDeque<usize>) -> Self {
+    pub fn from_buffer_with_strides(
+        buffer: GpuBuffer,
+        shape: VecDeque<usize>,
+        strides: VecDeque<usize>,
+    ) -> Self {
         Self {
             buffer,
-            shape: shape.clone(),
-            strides
+            dim_stride: DimStride::from_shape_and_strides(shape, strides),
         }
     }
-
 
     pub fn from_data(data: Vec<f32>, shape: Vec<usize>) -> Self {
         let gpu = GpuStore::get_default();
@@ -64,22 +65,31 @@ impl GpuTensor {
         Self::from_data_with_gpu(gpu, vec![data], vec![1])
     }
 
-
     pub async fn to_cpu(&self) -> CpuTensor {
         let gpu = self.get_gpu();
         let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.storage()).await;
-        CpuTensor::new_with_strides(buffer_in_cpu_mem, self.shape.clone(), self.strides.clone())
+        CpuTensor::new_with_strides(
+            buffer_in_cpu_mem,
+            self.shape().clone(),
+            self.strides().clone(),
+        )
     }
 
+    pub fn dim_strides(&self) -> &DimStride {
+        &self.dim_stride
+    }
+
+    pub fn is_scalar(&self) -> bool {
+        self.dim_stride.is_scalar()
+    }
 }
 
 impl Tensor for GpuTensor {
     fn shape(&self) -> &VecDeque<usize> {
-        &self.shape
+        &self.dim_stride.shape
     }
 
     fn strides(&self) -> &VecDeque<usize> {
-        &self.strides
+        &self.dim_stride.strides
     }
 }
-

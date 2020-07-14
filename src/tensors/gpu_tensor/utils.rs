@@ -11,11 +11,25 @@ pub fn strides_from_deque_shape(shape: &VecDeque<usize>) -> VecDeque<usize> {
 }
 
 #[test]
-pub fn can_calc_strides_from_shape(){
-    assert_eq!(strides_from_deque_shape(&VecDeque::from(vec![2, 2])), [2, 1]);
-    assert_eq!(strides_from_deque_shape(&VecDeque::from(vec![1, 2])), [2, 1]);
-    assert_eq!(strides_from_deque_shape(&VecDeque::from(vec![3, 1, 2])), [2, 2, 1]);
-    assert_eq!(strides_from_deque_shape(&VecDeque::from(vec![1, 1])), [1, 1]);
-    assert_eq!(strides_from_deque_shape(&VecDeque::from(vec![4, 3, 2, 2])), [12, 4, 2, 1]);
+pub fn can_calc_strides_from_shape() {
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::from(vec![2, 2])),
+        [2, 1]
+    );
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::from(vec![1, 2])),
+        [2, 1]
+    );
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::from(vec![3, 1, 2])),
+        [2, 2, 1]
+    );
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::from(vec![1, 1])),
+        [1, 1]
+    );
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::from(vec![4, 3, 2, 2])),
+        [12, 4, 2, 1]
+    );
 }
-

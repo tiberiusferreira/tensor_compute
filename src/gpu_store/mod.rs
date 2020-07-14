@@ -20,27 +20,37 @@ impl GpuStore {
     }
 
     pub fn get(gpu_info: &GpuInfo) -> &'static GpuInstance {
-        DEVICES.available_devices.iter().find(|dev| dev.info() == gpu_info).unwrap()
+        DEVICES
+            .available_devices
+            .iter()
+            .find(|dev| dev.info() == gpu_info)
+            .unwrap()
     }
 
     pub async fn select_gpu(gpu_info: &GpuInfo) {
-        let idx = DEVICES.available_devices.iter().position(|dev| dev.info() == gpu_info).unwrap();
+        let idx = DEVICES
+            .available_devices
+            .iter()
+            .position(|dev| dev.info() == gpu_info)
+            .unwrap();
         *(&DEVICES.current).write().unwrap() = idx;
     }
 
     pub fn list_gpus() -> Vec<&'static GpuInfo> {
-        (&DEVICES).available_devices.iter().map(|dev| dev.info()).collect()
+        (&DEVICES)
+            .available_devices
+            .iter()
+            .map(|dev| dev.info())
+            .collect()
     }
 
     async fn new() -> Self {
         let gpu_factory = crate::gpu_internals::gpu_factory::GpuFactory::new().await;
 
-        let gpu_list = gpu_factory
-            .list_gpus()
-            .await;
+        let gpu_list = gpu_factory.list_gpus().await;
 
         let mut gpu_instances = vec![];
-        for gpu_info in &gpu_list{
+        for gpu_info in &gpu_list {
             gpu_instances.push(gpu_factory.request_gpu(&gpu_info).await);
         }
         assert!(!gpu_instances.is_empty(), "No GPU detected!");
