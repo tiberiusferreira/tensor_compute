@@ -1,6 +1,6 @@
 use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, Tensor};
+use crate::{GpuTensor, TensorTrait};
 use zerocopy::{AsBytes, FromBytes};
 #[cfg(test)]
 mod tests;
@@ -29,7 +29,7 @@ pub async fn transpose(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: data.storage(), // tensor data
+                gpu_buffer: data.internal_gpu_buffer(), // tensor data
             },
             ShaderInput {
                 binding_id: 1,

@@ -3,7 +3,9 @@ pub use mm::*;
 mod relu;
 pub use relu::*;
 mod transpose;
-use crate::tensors::Tensor;
+mod fill_with;
+pub use fill_with::*;
+use crate::tensors::TensorTrait;
 use crate::GpuTensor;
 pub use transpose::transpose;
 
@@ -12,7 +14,11 @@ impl GpuTensor {
         leaky_relu(self.get_gpu(), self, leakage).await
     }
 
-    pub async fn mm(&self, other: &Self) -> Self {
+    pub async fn fill_with(&mut self, value: f32) {
+        fill_with(self.get_gpu(), self, value).await;
+    }
+
+    pub async fn mm<'a>(&'a self, other: &'a Self) -> Self {
         let gpu = self.get_gpu();
         // make sure tensors have rank 3 and same batch size, broadcasting if needed
         let (mut input_data_a_view, mut input_data_b_view) = self.broadcast(other, Some(2)).unwrap();

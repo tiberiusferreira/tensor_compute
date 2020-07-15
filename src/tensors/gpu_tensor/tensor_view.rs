@@ -1,5 +1,5 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
-use crate::{DimStride, GpuTensor, Tensor};
+use crate::{DimStride, GpuTensor, TensorTrait};
 use std::collections::VecDeque;
 
 /// A GpuTensorView share the same data as the original Tensor,
@@ -15,7 +15,7 @@ pub struct GpuTensorView<'a> {
 impl<'a> GpuTensorView<'a> {
     pub fn new(gpu_tensor: &'a GpuTensor, dim_strides: DimStride) -> Self {
         Self {
-            buffer: gpu_tensor.storage(),
+            buffer: gpu_tensor.internal_gpu_buffer(),
             dim_strides,
         }
     }
@@ -45,7 +45,7 @@ impl<'a> GpuTensorView<'a> {
     }
 }
 
-impl<'a> Tensor for GpuTensorView<'a> {
+impl<'a> TensorTrait for GpuTensorView<'a> {
     fn shape(&self) -> &VecDeque<usize> {
         self.shape()
     }

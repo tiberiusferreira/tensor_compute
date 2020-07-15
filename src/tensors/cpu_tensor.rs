@@ -1,6 +1,6 @@
 use crate::gpu_internals::GpuInstance;
 use crate::utils::strides_from_deque_shape;
-use crate::{GpuTensor, Tensor};
+use crate::{GpuTensor, TensorTrait};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter, Write};
 
@@ -31,7 +31,7 @@ impl Display for CpuTensor {
         Ok(())
     }
 }
-impl Tensor for CpuTensor {
+impl TensorTrait for CpuTensor {
     fn shape(&self) -> &VecDeque<usize> {
         &self.shape
     }
@@ -70,7 +70,7 @@ trait Printable {
 }
 impl<T> Printable for T
 where
-    T: Tensor + Indexable,
+    T: TensorTrait + Indexable,
 {
     fn print(&self, buff: &mut String, last: bool) {
         if self.shape().len() == 1 {
@@ -102,7 +102,7 @@ pub struct CpuTensorView<'a> {
     strides: VecDeque<usize>,
 }
 
-impl<'a> Tensor for CpuTensorView<'a> {
+impl<'a> TensorTrait for CpuTensorView<'a> {
     fn shape(&self) -> &VecDeque<usize> {
         &self.shape
     }

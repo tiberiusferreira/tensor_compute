@@ -1,6 +1,6 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, Tensor};
+use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, TensorTrait};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
 
@@ -15,7 +15,7 @@ impl Debug for GpuTensor {
 
 impl GpuTensor {
     // Accessors
-    pub fn storage(&self) -> &GpuBuffer {
+    pub fn internal_gpu_buffer(&self) -> &GpuBuffer {
         &self.buffer
     }
 
@@ -24,7 +24,23 @@ impl GpuTensor {
     }
 
     pub fn buffer_size_in_bytes(&self) -> usize {
-        self.storage().size_bytes()
+        self.internal_gpu_buffer().size_bytes()
+    }
+
+    pub async fn uninitialized(shape: Vec<usize>) -> GpuTensor{
+        Self::new_filled(shape, 0.).await
+    }
+
+    pub async fn new_filled(shape: Vec<usize>, fill_val: f32) -> GpuTensor {
+        let gpu = GpuStore::get_default();
+        let numel: usize = GpuTensor::numel_from_shape(&VecDeque::from(shape.clone()));
+        let buffer = gpu.new_empty_gpu_buffer(numel * std::mem::size_of::<f32>());
+        let mut tensor = GpuTensor{
+            buffer,
+            dim_stride: DimStride::from_shape_vec(shape)
+        };
+        tensor.fill_with(fill_val).await;
+        tensor
     }
 
     pub fn from_data_with_gpu(gpu: &GpuInstance, data: Vec<f32>, shape: Vec<usize>) -> Self {
@@ -67,7 +83,7 @@ impl GpuTensor {
 
     pub async fn to_cpu(&self) -> CpuTensor {
         let gpu = self.get_gpu();
-        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.storage()).await;
+        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.internal_gpu_buffer()).await;
         CpuTensor::new_with_strides(
             buffer_in_cpu_mem,
             self.shape().clone(),
@@ -84,7 +100,7 @@ impl GpuTensor {
     }
 }
 
-impl Tensor for GpuTensor {
+impl TensorTrait for GpuTensor {
     fn shape(&self) -> &VecDeque<usize> {
         &self.dim_stride.shape
     }

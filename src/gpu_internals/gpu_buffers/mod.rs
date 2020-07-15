@@ -78,16 +78,16 @@ impl GpuInstance {
     /// Creates an empty GPU buffer which can be copied to another buffer.
     /// One used case if to accumulate results of a computation in it and copy them to an
     /// output staging buffer
-    pub fn new_empty_gpu_buffer(&self, size: usize) -> GpuBuffer {
+    pub fn new_empty_gpu_buffer(&self, size_bytes: usize) -> GpuBuffer {
         let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,
-            size: size as u64,
+            size: size_bytes as u64,
             usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
             mapped_at_creation: false,
         });
         GpuBuffer {
             buffer,
-            size_bytes: size,
+            size_bytes,
             staging_output: false,
             device_info: self.info().clone(),
         }

@@ -1,6 +1,6 @@
 use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, Tensor};
+use crate::{GpuTensor, TensorTrait};
 
 #[cfg(test)]
 mod tests;
@@ -10,18 +10,18 @@ pub async fn leaky_relu(gpu: &GpuInstance, data: &GpuTensor, leakage: f32) -> Gp
 
     let leakage_as_tensor = GpuTensor::from_scalar(leakage);
     let nb_output_numbers = data.numel();
-    let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<u32>() * nb_output_numbers);
+    let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
     gpu.run_shader(
         &cs_module,
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: data.storage(),
+                gpu_buffer: data.internal_gpu_buffer(),
             },
             ShaderInput {
                 binding_id: 1,
-                gpu_buffer: leakage_as_tensor.storage(),
+                gpu_buffer: leakage_as_tensor.internal_gpu_buffer(),
             },
             ShaderInput {
                 binding_id: 2,

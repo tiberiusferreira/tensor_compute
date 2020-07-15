@@ -1,4 +1,4 @@
-use crate::{CpuTensor, GpuStore, Tensor};
+use crate::{CpuTensor, GpuStore, TensorTrait};
 
 #[test]
 fn strides_work() {

@@ -1,4 +1,4 @@
-use crate::{GpuTensor, Tensor};
+use crate::{GpuTensor, TensorTrait};
 use std::collections::VecDeque;
 
 impl GpuTensor {
