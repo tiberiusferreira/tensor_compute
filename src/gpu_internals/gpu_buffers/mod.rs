@@ -12,6 +12,28 @@ pub struct GpuBuffer {
     staging_output: bool,
 }
 
+pub struct GpuUniformBuffer{
+    /// The WebGPU buffer itself
+    buffer: Buffer,
+    /// Which device this buffer was allocated in
+    device_info: AdapterInfo,
+    /// The size of this buffer
+    size_bytes: usize,
+}
+
+impl GpuUniformBuffer{
+    pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry::new(
+            binding as u32,
+            wgpu::ShaderStage::COMPUTE,
+            wgpu::BindingType::UniformBuffer {
+                dynamic: false,
+                min_binding_size: wgpu::BufferSize::new(4),
+            },
+        )
+    }
+}
+
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
         wgpu::BindGroupLayoutEntry::new(
@@ -41,6 +63,18 @@ impl GpuBuffer {
     }
 }
 
+impl GpuUniformBuffer {
+    pub fn size_bytes(&self) -> usize {
+        self.size_bytes
+    }
+    pub fn device_info(&self) -> &AdapterInfo {
+        &self.device_info
+    }
+    pub fn to_bind_resource(&self) -> wgpu::BindingResource {
+        wgpu::BindingResource::Buffer(self.buffer.slice(..))
+    }
+}
+
 impl GpuInstance {
     /// A Buffer which can be COPIED to from other buffers MAPPED to readonly CPU memory
     /// This is needed because we cant read STORAGE buffers directly
@@ -55,6 +89,18 @@ impl GpuInstance {
             buffer,
             size_bytes: size,
             staging_output: true,
+            device_info: self.info().clone(),
+        }
+    }
+
+    pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer{
+        let buffer = self.device().create_buffer_with_data(
+            input_bytes,
+            wgpu::BufferUsage::UNIFORM,
+        );
+        GpuUniformBuffer {
+            buffer,
+            size_bytes: input_bytes.len(),
             device_info: self.info().clone(),
         }
     }

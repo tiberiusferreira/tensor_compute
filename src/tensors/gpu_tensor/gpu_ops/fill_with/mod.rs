@@ -1,4 +1,4 @@
-use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
+use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup, BufferType};
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, TensorTrait};
 
@@ -16,11 +16,11 @@ pub async fn fill_with(gpu: &GpuInstance, data: &GpuTensor, fill_with: f32) {
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: fill_val.internal_gpu_buffer(),
+                gpu_buffer: BufferType::Storage(fill_val.internal_gpu_buffer()),
             },
             ShaderInput {
                 binding_id: 1,
-                gpu_buffer: data.internal_gpu_buffer(),
+                gpu_buffer: BufferType::Storage(data.internal_gpu_buffer()),
             },
         ],
         ThreadGroup {

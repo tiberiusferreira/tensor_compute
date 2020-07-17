@@ -1,5 +1,5 @@
-mod mm;
-pub use mm::*;
+mod bmm;
+pub use bmm::*;
 mod relu;
 pub use relu::*;
 mod transpose;
@@ -32,22 +32,3 @@ impl GpuTensor {
         super::gpu_ops::bmm_kernel(gpu, &input_data_a_view, &input_data_b_view).await
     }
 }
-//
-// pub async fn mm_dispatcher(gpu: &GpuInstance,
-//                            input_data_a: &GpuTensor,
-//                            input_data_b: &GpuTensor){
-//
-//     if input_data_a.is_scalar() || input_data_b.is_scalar(){
-//         // scalar ops
-//         unimplemented!();
-//     }
-//
-//     // make sure tensors have rank 3 and same batch size, broadcasting if needed
-//     let (mut input_data_a_view, mut input_data_b_view) = input_data_a.broadcast(input_data_b).unwrap();
-//     if input_data_a_view.rank() < 3{
-//         input_data_a_view.increase_rank();
-//         input_data_b_view.increase_rank();
-//     }
-//     assert_eq!(input_data_a_view.shape().len(), 3);
-//     assert_eq!(input_data_b_view.shape().len(), 3);
-// }

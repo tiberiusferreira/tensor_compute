@@ -16,6 +16,7 @@ pub struct GpuTensor {
     dim_stride: DimStride,
 }
 
+
 #[derive(Debug, Clone)]
 pub struct DimStride {
     shape: VecDeque<usize>,

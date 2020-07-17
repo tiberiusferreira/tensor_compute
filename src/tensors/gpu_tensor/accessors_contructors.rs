@@ -1,4 +1,4 @@
-use crate::gpu_internals::gpu_buffers::GpuBuffer;
+use crate::gpu_internals::gpu_buffers::{GpuBuffer};
 use crate::gpu_internals::GpuInstance;
 use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, TensorTrait};
 use std::collections::VecDeque;
@@ -71,7 +71,13 @@ impl GpuTensor {
         }
     }
 
-    pub fn from_data(data: Vec<f32>, shape: Vec<usize>) -> Self {
+    pub fn from_vec(data: Vec<f32>) -> Self {
+        let len = data.len();
+        let gpu = GpuStore::get_default();
+        Self::from_data_with_gpu(gpu, data, vec![len])
+    }
+
+    pub fn from_data_and_shape(data: Vec<f32>, shape: Vec<usize>) -> Self {
         let gpu = GpuStore::get_default();
         Self::from_data_with_gpu(gpu, data, shape)
     }

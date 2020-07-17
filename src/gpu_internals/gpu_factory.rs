@@ -12,7 +12,7 @@ impl GpuFactory {
     pub async fn new() -> Self {
         let wgpu_instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
         let adapters: Vec<wgpu::Adapter> = wgpu_instance
-            .enumerate_adapters(wgpu::UnsafeFeatures::disallow(), wgpu::BackendBit::PRIMARY)
+            .enumerate_adapters(wgpu::BackendBit::PRIMARY)
             .collect();
         GpuFactory { adapters }
     }

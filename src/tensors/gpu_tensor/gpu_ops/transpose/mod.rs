@@ -1,4 +1,4 @@
-use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
+use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup, BufferType};
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, TensorTrait};
 use zerocopy::{AsBytes, FromBytes};
@@ -17,7 +17,7 @@ pub async fn transpose(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
     let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
 
     let shape_u32: Vec<u32> = data.shape().iter().map(|e| *e as u32).collect();
-    let shapes = gpu.new_gpu_buffer_from_data(shape_u32.as_slice().as_bytes());
+    let shapes = gpu.new_uniform_buffer(shape_u32.as_slice().as_bytes());
 
     let strides_u32: Vec<u32> = data.strides().iter().map(|e| *e as u32).collect();
     let strides = gpu.new_gpu_buffer_from_data(strides_u32.as_slice().as_bytes());
@@ -29,23 +29,23 @@ pub async fn transpose(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: data.internal_gpu_buffer(), // tensor data
+                gpu_buffer: BufferType::Storage(data.internal_gpu_buffer()), // tensor data
             },
             ShaderInput {
                 binding_id: 1,
-                gpu_buffer: &shapes, // tensor shape
+                gpu_buffer: BufferType::Uniform(&shapes), // tensor shape
             },
             ShaderInput {
                 binding_id: 2,
-                gpu_buffer: &strides, // tensor strides
+                gpu_buffer: BufferType::Storage(&strides), // tensor strides
             },
             ShaderInput {
                 binding_id: 3,
-                gpu_buffer: &nb_shapes, // number of shapes and strides
+                gpu_buffer: BufferType::Storage(&nb_shapes), // number of shapes and strides
             },
             ShaderInput {
                 binding_id: 4,
-                gpu_buffer: &out_buffer_store,
+                gpu_buffer: BufferType::Storage(&out_buffer_store),
             },
         ],
         ThreadGroup {

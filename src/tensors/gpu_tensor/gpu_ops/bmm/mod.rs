@@ -1,6 +1,6 @@
 mod tests;
 
-use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup};
+use crate::gpu_internals::shader_runner::{ShaderInput, ThreadGroup, BufferType};
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, GpuTensorView, TensorTrait};
 use std::collections::VecDeque;
@@ -63,19 +63,19 @@ pub async fn bmm_kernel<'a>(
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: input_data_a_view.buffer(),
+                gpu_buffer: BufferType::Storage(input_data_a_view.buffer()),
             },
             ShaderInput {
                 binding_id: 1,
-                gpu_buffer: input_data_b_view.buffer(),
+                gpu_buffer: BufferType::Storage(input_data_b_view.buffer()),
             },
             ShaderInput {
                 binding_id: 2,
-                gpu_buffer: &out_buffer_store,
+                gpu_buffer: BufferType::Storage(&out_buffer_store),
             },
             ShaderInput {
                 binding_id: 3,
-                gpu_buffer: &input_structure_data,
+                gpu_buffer: BufferType::Storage(&input_structure_data),
             },
         ],
         ThreadGroup {
