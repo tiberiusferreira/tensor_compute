@@ -95,7 +95,13 @@ impl Tensor{
         }
     }
 
-    pub async fn index_mut(&mut self, _indices: Vec<usize>) -> &mut Self{
+    // pub async fn index_mut<'a>(&'a self, _indices: Vec<usize>) -> TensorViewMut<'a>{
+    //     TensorView{
+    //         actual_tensor: self.actual_tensor.view()
+    //     }
+    // }
+
+    pub async fn index_move(&self, _indices: Vec<usize>) -> Tensor{
         unimplemented!()
     }
 

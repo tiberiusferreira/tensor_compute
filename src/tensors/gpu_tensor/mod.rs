@@ -9,6 +9,7 @@ pub use tensor_view::*;
 
 mod gpu_ops;
 mod shape_changing;
+mod indexing;
 pub mod utils;
 
 pub struct GpuTensor {

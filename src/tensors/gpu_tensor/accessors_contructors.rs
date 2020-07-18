@@ -1,9 +1,10 @@
 use crate::gpu_internals::gpu_buffers::{GpuBuffer};
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, TensorTrait};
+use crate::{CpuTensor, DimStride, GpuStore, GpuTensor, TensorTrait, TensorView};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
-
+use crate::tensors::gpu_tensor::indexing::SliceRangeInfo;
+use crate::s;
 impl Debug for GpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Gpu Tensor")
@@ -104,8 +105,31 @@ impl GpuTensor {
     pub fn is_scalar(&self) -> bool {
         self.dim_stride.is_scalar()
     }
+
+    pub fn index<'a, T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> TensorView<'a>{
+        let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
+
+        for b in bounds{
+            println!("{:?}", b.start);
+            println!("{:?}", b.step);
+            println!("{:?}", b.inclusive_end);
+        }
+
+        unimplemented!()
+    }
 }
 
+
+
+#[test]
+fn test_bounds(){
+    let block = async {
+        let a = GpuTensor::uninitialized(vec![3, 3]).await;
+        a.index(s!(2; (2,2,2); 3));
+        a.index(s!(2; (2,2,2)));
+    };
+    futures::executor::block_on(block);
+}
 impl TensorTrait for GpuTensor {
     fn shape(&self) -> &VecDeque<usize> {
         &self.dim_stride.shape
