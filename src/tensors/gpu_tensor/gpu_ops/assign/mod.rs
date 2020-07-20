@@ -1,6 +1,6 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, TensorTrait, GpuTensorViewMut};
+use crate::{GpuTensor, GpuTensorViewMut, TensorTrait};
 use zerocopy::AsBytes;
 
 #[cfg(test)]

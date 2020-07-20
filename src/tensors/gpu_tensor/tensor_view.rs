@@ -1,9 +1,8 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, GpuTensor, ShapeStrides, TensorTrait, SliceRangeInfo};
-use std::collections::VecDeque;
 use crate::tensors::gpu_tensor::indexing::shape_strides_for_slice_range;
-
+use crate::{CpuTensor, GpuTensor, ShapeStrides, SliceRangeInfo, TensorTrait};
+use std::collections::VecDeque;
 
 /// A GpuTensorView share the same data as the original Tensor,
 /// but can have different shapes and strides

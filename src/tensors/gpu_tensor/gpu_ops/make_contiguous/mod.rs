@@ -1,13 +1,13 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, TensorTrait, GpuTensorView, ShapeStrides};
+use crate::{GpuTensor, GpuTensorView, ShapeStrides, TensorTrait};
 use zerocopy::AsBytes;
 
 #[cfg(test)]
 mod tests;
 
-pub async fn contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) -> GpuTensor {
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("contiguous.spv"));
+pub async fn make_contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) -> GpuTensor {
+    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("make_contiguous.spv"));
 
     let nb_output_numbers = data.numel();
 
@@ -54,8 +54,8 @@ pub async fn contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) -> GpuT
             z: 1,
         },
     );
-    GpuTensor{
+    GpuTensor {
         buffer: output,
-        shape_strides: ShapeStrides::from_shape(data.shape().clone())
+        shape_strides: ShapeStrides::from_shape(data.shape().clone()),
     }
 }

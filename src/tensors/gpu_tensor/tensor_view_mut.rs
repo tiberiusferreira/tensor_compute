@@ -1,9 +1,8 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
+use crate::tensors::gpu_tensor::indexing::shape_strides_for_slice_range;
 use crate::{CpuTensor, GpuTensor, ShapeStrides, TensorTrait};
 use std::collections::VecDeque;
-use crate::tensors::gpu_tensor::indexing::shape_strides_for_slice_range;
-
 
 /// Same as GpuTensorView but mutable
 pub struct GpuTensorViewMut<'a> {
@@ -11,11 +10,10 @@ pub struct GpuTensorViewMut<'a> {
     pub shape_strides: ShapeStrides,
 }
 
-
 impl<'a> GpuTensorViewMut<'a> {
     pub fn from_tensor(gpu_tensor: &'a mut GpuTensor, dim_strides: ShapeStrides) -> Self {
         Self {
-            original_tensor:  gpu_tensor,
+            original_tensor: gpu_tensor,
             shape_strides: dim_strides,
         }
     }

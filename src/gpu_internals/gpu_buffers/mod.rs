@@ -97,6 +97,7 @@ impl GpuInstance {
         let buffer = self
             .device()
             .create_buffer_with_data(input_bytes, wgpu::BufferUsage::UNIFORM);
+
         GpuUniformBuffer {
             buffer,
             size_bytes: input_bytes.len(),

@@ -2,30 +2,35 @@ mod bmm;
 pub use bmm::*;
 mod relu;
 pub use relu::*;
-mod fill_with;
-mod transpose;
 mod assign;
-mod contiguous;
-pub use contiguous::*;
-pub use assign::*;
+mod fill_with;
+mod make_contiguous;
+mod transpose;
+pub use make_contiguous::*;
+mod clone;
+pub use clone::*;
+
 use crate::tensors::TensorTrait;
 use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut};
+pub use assign::*;
 pub use fill_with::*;
 pub use transpose::transpose;
 
-impl <'a> GpuTensorView<'a>{
+impl<'a> GpuTensorView<'a> {
     pub async fn contiguous(&self) -> GpuTensor {
-        contiguous(self.get_gpu(), self).await
+        make_contiguous(self.get_gpu(), self).await
     }
 }
 
-impl <'a> GpuTensorViewMut<'a>{
+impl<'a> GpuTensorViewMut<'a> {
     pub async fn assign_kernel(&mut self, data: f32) {
         assign(self.get_gpu(), self, data).await;
     }
 }
 impl GpuTensor {
-
+    pub async fn clone(&self) -> GpuTensor {
+        clone(self.get_gpu(), self).await
+    }
 
     pub async fn leaky_relu(&self, leakage: f32) -> GpuTensor {
         leaky_relu(self.get_gpu(), self, leakage).await
@@ -35,7 +40,7 @@ impl GpuTensor {
         fill_with(self.get_gpu(), self, value).await;
     }
 
-    pub async fn mm<'a>(&'a self, other: &'a Self) -> Self {
+    pub async fn matmul<'a>(&'a self, other: &'a Self) -> Self {
         let gpu = self.get_gpu();
         // make sure tensors have rank 3 and same batch size, broadcasting if needed
         let (mut input_data_a_view, mut input_data_b_view) =
@@ -50,5 +55,3 @@ impl GpuTensor {
         super::gpu_ops::bmm_kernel(gpu, &input_data_a_view, &input_data_b_view).await
     }
 }
-
-

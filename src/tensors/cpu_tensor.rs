@@ -12,14 +12,14 @@ pub struct CpuTensor {
     offset: usize,
 }
 
-impl PartialEq for CpuTensor{
+impl PartialEq for CpuTensor {
     fn eq(&self, other: &Self) -> bool {
-        if other.shape != self.shape{
+        if other.shape != self.shape {
             return false;
         }
         let mut self_indexer = LinearIndexer::from_shape(self.shape());
-        while let Some((idx, _nb_dim_closed)) = self_indexer.next(){
-            if self.idx(idx) != other.idx(idx){
+        while let Some((idx, _nb_dim_closed)) = self_indexer.next() {
+            if self.idx(idx) != other.idx(idx) {
                 return false;
             }
         }
@@ -39,18 +39,18 @@ impl Display for CpuTensor {
             f.write_str("[").unwrap();
         }
         let ident = self.shape.len();
-        while let Some((idx, dims_closed)) = indexer.next(){
-            for _i in 0..dims_closed{
+        while let Some((idx, dims_closed)) = indexer.next() {
+            for _i in 0..dims_closed {
                 f.write_str("]").unwrap();
             }
-            for _i in 0..dims_closed{
+            for _i in 0..dims_closed {
                 f.write_str("\n").unwrap();
                 // keep indentation
-                for _i in 0..ident - dims_closed{
+                for _i in 0..ident - dims_closed {
                     f.write_str(" ").unwrap();
                 }
             }
-            for _i in 0..dims_closed{
+            for _i in 0..dims_closed {
                 f.write_str("[").unwrap();
             }
             f.write_str(" ").unwrap();
@@ -73,9 +73,6 @@ impl TensorTrait for CpuTensor {
         &self.strides
     }
 }
-
-
-
 
 impl CpuTensor {
     pub fn new(data: Vec<f32>, shape: Vec<usize>) -> Self {
@@ -145,51 +142,51 @@ impl CpuTensor {
     }
 }
 
-struct LinearIndexer{
+struct LinearIndexer {
     curr_index: Vec<usize>,
     max_index: Vec<usize>,
-    started: bool
+    started: bool,
 }
-impl LinearIndexer{
-    pub fn from_shape_vec(shape: &Vec<usize>) -> Self{
+impl LinearIndexer {
+    pub fn from_shape_vec(shape: &Vec<usize>) -> Self {
         let new_vec: Vec<usize> = shape.iter().map(|_e| 0).collect();
-        Self{
+        Self {
             curr_index: new_vec,
             max_index: shape.clone(),
-            started: false
+            started: false,
         }
     }
 
-    pub fn from_shape(shape: &VecDeque<usize>) -> Self{
+    pub fn from_shape(shape: &VecDeque<usize>) -> Self {
         let new_vec: Vec<usize> = shape.iter().map(|_e| 0).collect();
-        Self{
+        Self {
             curr_index: new_vec,
             max_index: Vec::from(shape.clone()),
-            started: false
+            started: false,
         }
     }
 
     /// Returns the next index and the number of dimensions "closed" in this iteration
-    pub fn next(&mut self) -> Option<(&Vec<usize>, usize)>{
+    pub fn next(&mut self) -> Option<(&Vec<usize>, usize)> {
         let mut nb_dims_closed: usize = 0;
-        if !self.started{
+        if !self.started {
             nb_dims_closed = 0;
             self.started = true;
-        }else{
+        } else {
             let mut found = false;
             let max_iter = self.max_index.iter().rev();
             let curr_iter = self.curr_index.iter_mut().rev();
-            for (cur, max) in curr_iter.zip(max_iter){
+            for (cur, max) in curr_iter.zip(max_iter) {
                 if *cur < *max - 1 {
                     *cur += 1;
                     found = true;
                     break;
-                }else{
+                } else {
                     *cur = 0;
                     nb_dims_closed += 1;
                 }
             }
-            if !found{
+            if !found {
                 return None;
             }
         }

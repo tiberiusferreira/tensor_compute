@@ -1,8 +1,10 @@
 mod cpu_tensor;
 mod gpu_tensor;
+use blocking::block_on;
 pub use cpu_tensor::*;
 pub use gpu_tensor::*;
 use std::collections::VecDeque;
+use std::fmt::{Debug, Formatter};
 
 pub trait TensorTrait {
     fn shape(&self) -> &VecDeque<usize>;
@@ -18,9 +20,14 @@ pub trait TensorTrait {
     }
 }
 
-#[derive(Debug)]
 pub struct Tensor {
     actual_tensor: GpuTensor,
+}
+
+impl Debug for Tensor {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.actual_tensor.fmt(f)
+    }
 }
 
 // #[derive(Debug)]
@@ -28,12 +35,33 @@ pub struct TensorView<'a> {
     actual_tensor: GpuTensorView<'a>,
 }
 
+impl<'a> TensorView<'a> {
+    pub async fn make_contiguous(&self) -> GpuTensor {
+        self.actual_tensor.contiguous().await
+    }
+}
+
+impl Clone for Tensor {
+    fn clone(&self) -> Self {
+        Self {
+            actual_tensor: blocking::block_on(self.actual_tensor.clone()),
+        }
+    }
+}
 impl Tensor {
     /*******  Constructors  *******/
-    pub fn from_vec(vec: Vec<f32>) -> Self {
+    pub fn from_data(vec: Vec<f32>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         Tensor {
             actual_tensor: GpuTensor::from_vec(vec),
+        }
+    }
+
+    pub fn from_data_and_shape(vec: Vec<f32>, shape: Vec<usize>) -> Self {
+        assert!(!vec.is_empty(), "Data cant be empty!");
+        assert!(!shape.is_empty(), "Shape cant be empty!");
+        Tensor {
+            actual_tensor: GpuTensor::from_data_and_shape(vec, shape),
         }
     }
 
@@ -56,6 +84,11 @@ impl Tensor {
         Self::zeros(vec![1]).await
     }
 
+    pub async fn clone_async(&self) -> Self {
+        Self {
+            actual_tensor: self.actual_tensor.clone().await,
+        }
+    }
     /*******  Accessors  *******/
     // pub async fn is_empty(&self) -> bool {
     //     unimplemented!()
@@ -70,47 +103,62 @@ impl Tensor {
     }
 
     /*******  Ops  *******/
-    pub async fn fill_with(&mut self, value: f32) {
+    pub async fn fill_with_async(&mut self, value: f32) {
         self.actual_tensor.fill_with(value).await;
     }
 
-    pub async fn matmul(&mut self, other: &Self) -> Self {
+    pub fn fill_with(&mut self, value: f32) {
+        block_on(self.actual_tensor.fill_with(value));
+    }
+
+    pub async fn matmul_async(&mut self, other: &Self) -> Self {
         Self {
-            actual_tensor: self.actual_tensor.mm(&other.actual_tensor).await,
+            actual_tensor: self.actual_tensor.matmul(&other.actual_tensor).await,
         }
     }
 
-    pub async fn relu(&self, leakage: f32) -> Self {
+    pub fn matmul(&self, other: &Self) -> Self {
+        Self {
+            actual_tensor: block_on(self.actual_tensor.matmul(&other.actual_tensor)),
+        }
+    }
+
+    pub async fn relu_async(&self, leakage: f32) -> Self {
         Self {
             actual_tensor: self.actual_tensor.leaky_relu(leakage).await,
         }
     }
 
-    /*******  Conversions  *******/
-    pub async fn copy_to_vec(&self) -> Vec<f32> {
-        self.actual_tensor.to_cpu().await.raw_data_slice().to_vec()
-    }
-
-    /*******  Indexing Ops  *******/
-    pub async fn i<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
-        TensorView {
-            actual_tensor: self.actual_tensor.i(indices)
+    pub fn relu(&self, leakage: f32) -> Self {
+        Self {
+            actual_tensor: block_on(self.actual_tensor.leaky_relu(leakage)),
         }
     }
 
-    // pub async fn index_mut<'a>(&'a self, _indices: Vec<usize>) -> TensorViewMut<'a>{
-    //     TensorView{
-    //         actual_tensor: self.actual_tensor.view()
-    //     }
-    // }
+    /*******  Conversions  *******/
 
-    pub async fn index_move(&self, _indices: Vec<usize>) -> Tensor {
-        unimplemented!()
+    /*******  Indexing Ops  *******/
+    pub fn i<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
+        TensorView {
+            actual_tensor: self.actual_tensor.i(indices),
+        }
+    }
+
+    pub async fn assign_async<T: Into<SliceRangeInfo>>(&mut self, indices: Vec<T>, value: f32) {
+        self.actual_tensor.assign(indices, value).await;
+    }
+
+    pub fn assign<T: Into<SliceRangeInfo>>(&mut self, indices: Vec<T>, value: f32) {
+        block_on(self.actual_tensor.assign(indices, value));
     }
 
     /*******  Shape Changing  *******/
-    pub async fn transpose(&mut self) {
+    pub async fn transpose_async(&mut self) {
         self.actual_tensor.transpose().await;
+    }
+
+    pub async fn transpose(&mut self) {
+        block_on(self.actual_tensor.transpose());
     }
 
     pub fn reshape(&mut self, new_shape: Vec<usize>) {
