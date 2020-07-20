@@ -1,7 +1,7 @@
 /// Copied shamelessly from NDArray
 mod index_to_dim_stride;
-use std::ops::{Deref, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
-use std::iter::StepBy;
+pub use index_to_dim_stride::shape_strides_for_slice_range;
+use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct SliceRangeInfo {
@@ -11,18 +11,29 @@ pub struct SliceRangeInfo {
 }
 
 impl SliceRangeInfo {
-    /// Create a new `Slice` with the given extents.
-    ///
-    /// See also the `From` impls, converting from ranges; for example
-    /// `Slice::from(i..)` or `Slice::from(j..k)`.
-    ///
-    /// `step` must be nonzero.
-    /// (This method checks with a debug assertion that `step` is not zero.)
-    pub fn new(start: usize, inclusive_end: Option<usize>, step: usize) -> SliceRangeInfo {
-        debug_assert_ne!(step, 0, "Slice::new: step must be nonzero");
-        SliceRangeInfo { start, inclusive_end, step }
+    pub fn new(start: usize, mut exclusive_end: Option<usize>, step: usize) -> Self {
+        if let Some(end) = &mut exclusive_end {
+            let isize_end = *end as isize;
+            assert!(
+                start as isize <= isize_end - 1,
+                format!(
+                    "Start ({:?}) needs to be smaller than end ({:?}).",
+                    start,
+                    isize_end - 1
+                )
+            );
+            *end -= 1;
+        }
+        assert!(step > 0, "Step need to be greater than 0");
+        SliceRangeInfo {
+            start,
+            inclusive_end: exclusive_end,
+            step,
+        }
     }
+}
 
+impl SliceRangeInfo {
     /// Create a new `Slice` with the given step size (multiplied with the
     /// previous step size).
     ///
@@ -38,18 +49,12 @@ impl SliceRangeInfo {
     }
 }
 
-
-
 macro_rules! impl_slice_variant_from_range {
     ($self:ty, $constructor:path, $index:ty) => {
         impl From<Range<$index>> for $self {
             #[inline]
             fn from(r: Range<$index>) -> $self {
-                $constructor {
-                    start: r.start as usize,
-                    inclusive_end: Some(r.end - 1 as usize),
-                    step: 1,
-                }
+                <$constructor>::new(r.start as usize, Some(r.end as usize), 1)
             }
         }
 
@@ -57,33 +62,21 @@ macro_rules! impl_slice_variant_from_range {
             #[inline]
             fn from(r: RangeInclusive<$index>) -> $self {
                 let end = *r.end() as usize;
-                $constructor {
-                    start: *r.start() as usize,
-                    inclusive_end: Some(end),
-                    step: 1,
-                }
+                <$constructor>::new(*r.start() as usize, Some(end + 1), 1)
             }
         }
 
         impl From<RangeFrom<$index>> for $self {
             #[inline]
             fn from(r: RangeFrom<$index>) -> $self {
-                $constructor {
-                    start: r.start as usize,
-                    inclusive_end: None,
-                    step: 1,
-                }
+                <$constructor>::new(r.start as usize, None, 1)
             }
         }
 
         impl From<RangeTo<$index>> for $self {
             #[inline]
             fn from(r: RangeTo<$index>) -> $self {
-                $constructor {
-                    start: 0,
-                    inclusive_end: Some(r.end as usize - 1),
-                    step: 1,
-                }
+                <$constructor>::new(0, Some(r.end as usize), 1)
             }
         }
 
@@ -91,11 +84,13 @@ macro_rules! impl_slice_variant_from_range {
             #[inline]
             fn from(r: RangeToInclusive<$index>) -> $self {
                 let end = r.end as usize;
-                $constructor {
-                    start: 0,
-                    inclusive_end: Some(end),
-                    step: 1,
-                }
+                <$constructor>::new(0, Some(end + 1), 1)
+            }
+        }
+        impl From<RangeFull> for $self {
+            #[inline]
+            fn from(_r: RangeFull) -> $self {
+                <$constructor>::new(0, None, 1)
             }
         }
     };
@@ -106,17 +101,13 @@ impl_slice_variant_from_range!(SliceRangeInfo, SliceRangeInfo, usize);
 
 impl From<usize> for SliceRangeInfo {
     fn from(number: usize) -> Self {
-        SliceRangeInfo::new(number, Some(number), 1)
+        SliceRangeInfo::new(number, Some(number + 1), 1)
     }
 }
 
 impl From<(usize, usize, usize)> for SliceRangeInfo {
     fn from(tuple: (usize, usize, usize)) -> Self {
-        SliceRangeInfo{
-            start: tuple.0,
-            inclusive_end: Some(tuple.2 - 1),
-            step: tuple.1
-        }
+        SliceRangeInfo::new(tuple.0, Some(tuple.1), tuple.2)
     }
 }
 
@@ -132,13 +123,17 @@ macro_rules! s (
         vector
     }
     };
-    ($($t:tt)*) => { compile_error!("Invalid syntax in s![] call.") };
+    ($($t:tt)*) => { compile_error!("Invalid syntax in s![] call. \
+    Inputs can be:\
+       1- Range\
+       2- START ; STOP ; STEP\
+       3- single usize\
+    each separated by ';'") };
 );
 
 #[test]
-fn test(){
+fn test() {
     let a = SliceRangeInfo::from((0..3));
     // let b: dyn Into<Slice> = (0..4);
     println!("{:?}", a);
 }
-

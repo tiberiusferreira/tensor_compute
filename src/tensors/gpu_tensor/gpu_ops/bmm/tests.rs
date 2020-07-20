@@ -25,7 +25,8 @@ fn simple_rank_2_mm_different_dims() {
 #[test]
 fn mm_with_broadcasting() {
     let async_block = async {
-        let ma = GpuTensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
+        let ma =
+            GpuTensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
         let mb = GpuTensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]);
         let result = &ma.mm(&mb).await;
         assert_eq!(

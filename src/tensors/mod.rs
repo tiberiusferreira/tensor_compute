@@ -19,79 +19,79 @@ pub trait TensorTrait {
 }
 
 #[derive(Debug)]
-pub struct Tensor{
+pub struct Tensor {
     actual_tensor: GpuTensor,
 }
 
 // #[derive(Debug)]
-pub struct TensorView<'a>{
+pub struct TensorView<'a> {
     actual_tensor: GpuTensorView<'a>,
 }
 
-impl Tensor{
+impl Tensor {
     /*******  Constructors  *******/
-    pub fn from_vec(vec: Vec<f32>) -> Self{
-        Tensor{
-            actual_tensor: GpuTensor::from_vec(vec)
+    pub fn from_vec(vec: Vec<f32>) -> Self {
+        Tensor {
+            actual_tensor: GpuTensor::from_vec(vec),
         }
     }
 
-    pub async fn zeros(shape: Vec<usize>) -> Self{
-        Self{
-            actual_tensor: GpuTensor::new_filled(shape, 0.).await
+    pub async fn zeros(shape: Vec<usize>) -> Self {
+        Self {
+            actual_tensor: GpuTensor::new_filled(shape, 0.).await,
         }
     }
 
-    pub async fn rand(_shape: Vec<usize>) -> Self{
+    pub async fn rand(_shape: Vec<usize>) -> Self {
         unimplemented!()
     }
 
-    pub async fn zeros_like(other: &Self) -> Self{
+    pub async fn zeros_like(other: &Self) -> Self {
         Self::zeros(other.shape()).await
     }
 
-    pub async fn empty() -> Self{
+    pub async fn empty() -> Self {
         unimplemented!()
     }
 
     /*******  Accessors  *******/
-    pub async fn is_empty(&self) -> bool{
+    pub async fn is_empty(&self) -> bool {
         unimplemented!()
     }
 
-    pub fn shape(&self) -> Vec<usize>{
+    pub fn shape(&self) -> Vec<usize> {
         Vec::from(self.actual_tensor.shape().clone())
     }
 
-    pub fn strides(&self) -> Vec<usize>{
+    pub fn strides(&self) -> Vec<usize> {
         Vec::from(self.actual_tensor.strides().clone())
     }
     /*******  Ops  *******/
-    pub async fn fill_with(&mut self, value: f32){
+    pub async fn fill_with(&mut self, value: f32) {
         self.actual_tensor.fill_with(value).await;
     }
 
-    pub async fn matmul(&mut self, other: &Self) -> Self{
-        Self{
-            actual_tensor: self.actual_tensor.mm(&other.actual_tensor).await
+    pub async fn matmul(&mut self, other: &Self) -> Self {
+        Self {
+            actual_tensor: self.actual_tensor.mm(&other.actual_tensor).await,
         }
     }
 
-    pub async fn relu(&self, leakage: f32) -> Self{
-        Self{
-            actual_tensor: self.actual_tensor.leaky_relu(leakage).await
+    pub async fn relu(&self, leakage: f32) -> Self {
+        Self {
+            actual_tensor: self.actual_tensor.leaky_relu(leakage).await,
         }
     }
 
     /*******  Conversions  *******/
-    pub async fn copy_to_vec(&self) -> Vec<f32>{
+    pub async fn copy_to_vec(&self) -> Vec<f32> {
         unimplemented!()
     }
 
     /*******  Indexing Ops  *******/
-    pub async fn index<'a>(&'a self, _indices: Vec<usize>) -> TensorView<'a>{
-        TensorView{
-            actual_tensor: self.actual_tensor.view()
+    pub async fn index<'a>(&'a self, _indices: Vec<usize>) -> TensorView<'a> {
+        TensorView {
+            actual_tensor: self.actual_tensor.view(),
         }
     }
 
@@ -101,20 +101,18 @@ impl Tensor{
     //     }
     // }
 
-    pub async fn index_move(&self, _indices: Vec<usize>) -> Tensor{
+    pub async fn index_move(&self, _indices: Vec<usize>) -> Tensor {
         unimplemented!()
     }
 
     /*******  Shape Changing  *******/
-    pub async fn transpose(&mut self){
+    pub async fn transpose(&mut self) {
         self.actual_tensor.transpose().await;
     }
 
-    pub fn reshape(&mut self, new_shape: Vec<usize>){
+    pub fn reshape(&mut self, new_shape: Vec<usize>) {
         self.actual_tensor.reshape(new_shape);
     }
-
-
 }
 
 pub trait ToImpl {
@@ -151,7 +149,9 @@ pub trait ToImpl {
     fn matmul2d(&self, rhs: &Self) -> Self;
 
     // Operating on all elements
-    fn map_inplace<F>(&mut self, f: F) where F: FnMut(&mut f32);
+    fn map_inplace<F>(&mut self, f: F)
+    where
+        F: FnMut(&mut f32);
 
     fn index(&self, index: &[usize]) -> f32;
     fn _index_mut(&mut self, index: &[usize]) -> &mut f32;

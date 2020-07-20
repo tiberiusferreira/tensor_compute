@@ -36,6 +36,6 @@ impl GpuTensor {
             self.numel(),
             "Shape is not valid for the size of the data!"
         );
-        self.dim_stride.shape = VecDeque::from(shape);
+        self.shape_strides.shape = VecDeque::from(shape);
     }
 }

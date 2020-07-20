@@ -1,24 +1,23 @@
 use crate::gpu_internals::gpu_buffers::{GpuBuffer, GpuUniformBuffer};
 use crate::gpu_internals::GpuInstance;
-use wgpu::{BindGroupLayoutEntry, BindGroupEntry, ShaderModule, BindingResource};
+use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 
-
-pub enum BufferType<'a>{
+pub enum BufferType<'a> {
     Storage(&'a GpuBuffer),
     Uniform(&'a GpuUniformBuffer),
 }
 
-impl <'a> BufferType<'a>{
-    pub fn layout(&self, id: usize) -> BindGroupLayoutEntry{
-        match self{
-            BufferType::Storage(a) => {a.layout(id)},
-            BufferType::Uniform(a) => {a.layout(id)},
+impl<'a> BufferType<'a> {
+    pub fn layout(&self, id: usize) -> BindGroupLayoutEntry {
+        match self {
+            BufferType::Storage(a) => a.layout(id),
+            BufferType::Uniform(a) => a.layout(id),
         }
     }
-    pub fn to_bind_resource(&self) -> BindingResource{
-        match self{
-            BufferType::Storage(a) => {a.to_bind_resource()},
-            BufferType::Uniform(a) => {a.to_bind_resource()},
+    pub fn to_bind_resource(&self) -> BindingResource {
+        match self {
+            BufferType::Storage(a) => a.to_bind_resource(),
+            BufferType::Uniform(a) => a.to_bind_resource(),
         }
     }
 }
@@ -62,7 +61,7 @@ impl GpuInstance {
             self.device()
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                     label: None,
-                    entries: bindings_layouts.as_slice()
+                    entries: bindings_layouts.as_slice(),
                 });
         let bindings: Vec<BindGroupEntry> = shader_inputs
             .iter()
@@ -71,13 +70,13 @@ impl GpuInstance {
         let bind_group = self.device().create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            entries: bindings.as_slice()
+            entries: bindings.as_slice(),
         });
         let pipeline_layout =
             self.device()
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     bind_group_layouts: &[&bind_group_layout],
-                    push_constant_ranges: &[]
+                    push_constant_ranges: &[],
                 });
         let compute_pipeline =
             self.device()

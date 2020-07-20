@@ -12,7 +12,7 @@ pub struct GpuBuffer {
     staging_output: bool,
 }
 
-pub struct GpuUniformBuffer{
+pub struct GpuUniformBuffer {
     /// The WebGPU buffer itself
     buffer: Buffer,
     /// Which device this buffer was allocated in
@@ -21,7 +21,7 @@ pub struct GpuUniformBuffer{
     size_bytes: usize,
 }
 
-impl GpuUniformBuffer{
+impl GpuUniformBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
         wgpu::BindGroupLayoutEntry::new(
             binding as u32,
@@ -93,11 +93,10 @@ impl GpuInstance {
         }
     }
 
-    pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer{
-        let buffer = self.device().create_buffer_with_data(
-            input_bytes,
-            wgpu::BufferUsage::UNIFORM,
-        );
+    pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer {
+        let buffer = self
+            .device()
+            .create_buffer_with_data(input_bytes, wgpu::BufferUsage::UNIFORM);
         GpuUniformBuffer {
             buffer,
             size_bytes: input_bytes.len(),
