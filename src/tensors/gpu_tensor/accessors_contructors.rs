@@ -1,7 +1,7 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
 use crate::tensors::gpu_tensor::indexing::{shape_strides_for_slice_range, SliceRangeInfo};
-use crate::{CpuTensor, GpuStore, GpuTensor, GpuTensorView, ShapeStrides, TensorTrait};
+use crate::{CpuTensor, GpuStore, GpuTensor, GpuTensorView, ShapeStrides, TensorTrait, GpuTensorViewMut};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
 
@@ -111,13 +111,13 @@ impl GpuTensor {
     pub fn i<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {
         let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
         let new_shape_strides = shape_strides_for_slice_range(&self.shape_strides, bounds);
-        GpuTensorView::new(self, new_shape_strides)
+        GpuTensorView::from_tensor(self, new_shape_strides)
     }
 
     pub async fn assign<T: Into<SliceRangeInfo>>(&mut self, bounds: Vec<T>, value: f32){
         let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
         let new_shape_strides = shape_strides_for_slice_range(&self.shape_strides, bounds);
-        let mut to_be_changed = GpuTensorView::new(self, new_shape_strides);
+        let mut to_be_changed = GpuTensorViewMut::from_tensor(self, new_shape_strides);
         to_be_changed.assign_kernel(value).await;
     }
 }

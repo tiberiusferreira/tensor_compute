@@ -31,12 +31,14 @@ pub struct TensorView<'a> {
 impl Tensor {
     /*******  Constructors  *******/
     pub fn from_vec(vec: Vec<f32>) -> Self {
+        assert!(!vec.is_empty(), "Data cant be empty!");
         Tensor {
             actual_tensor: GpuTensor::from_vec(vec),
         }
     }
 
     pub async fn zeros(shape: Vec<usize>) -> Self {
+        assert!(!shape.is_empty(), "Shape cant be empty!");
         Self {
             actual_tensor: GpuTensor::new_filled(shape, 0.).await,
         }
@@ -51,13 +53,13 @@ impl Tensor {
     }
 
     pub async fn empty() -> Self {
-        unimplemented!()
+        Self::zeros(vec![1]).await
     }
 
     /*******  Accessors  *******/
-    pub async fn is_empty(&self) -> bool {
-        unimplemented!()
-    }
+    // pub async fn is_empty(&self) -> bool {
+    //     unimplemented!()
+    // }
 
     pub fn shape(&self) -> Vec<usize> {
         Vec::from(self.actual_tensor.shape().clone())
@@ -66,6 +68,7 @@ impl Tensor {
     pub fn strides(&self) -> Vec<usize> {
         Vec::from(self.actual_tensor.strides().clone())
     }
+
     /*******  Ops  *******/
     pub async fn fill_with(&mut self, value: f32) {
         self.actual_tensor.fill_with(value).await;
@@ -85,13 +88,13 @@ impl Tensor {
 
     /*******  Conversions  *******/
     pub async fn copy_to_vec(&self) -> Vec<f32> {
-        unimplemented!()
+        self.actual_tensor.to_cpu().await.raw_data_slice().to_vec()
     }
 
     /*******  Indexing Ops  *******/
-    pub async fn index<'a>(&'a self, _indices: Vec<usize>) -> TensorView<'a> {
+    pub async fn i<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
         TensorView {
-            actual_tensor: self.actual_tensor.view(),
+            actual_tensor: self.actual_tensor.i(indices)
         }
     }
 

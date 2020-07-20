@@ -7,7 +7,7 @@ fn fill_with() {
             GpuTensor::from_data_and_shape(vec![-1., -2., -3., -4., 5., 6.], vec![3, 2]);
         tensor.fill_with(10.).await;
         assert_eq!(
-            tensor.to_cpu().await.data_slice(),
+            tensor.to_cpu().await.raw_data_slice(),
             &[10., 10., 10., 10., 10., 10.]
         );
     };

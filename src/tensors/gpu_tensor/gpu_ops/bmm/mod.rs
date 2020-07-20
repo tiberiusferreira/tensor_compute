@@ -63,11 +63,11 @@ pub async fn bmm_kernel<'a>(
         vec![
             ShaderInput {
                 binding_id: 0,
-                gpu_buffer: BufferType::Storage(input_data_a_view.buffer()),
+                gpu_buffer: BufferType::Storage(input_data_a_view.internal_gpu_buffer()),
             },
             ShaderInput {
                 binding_id: 1,
-                gpu_buffer: BufferType::Storage(input_data_b_view.buffer()),
+                gpu_buffer: BufferType::Storage(input_data_b_view.internal_gpu_buffer()),
             },
             ShaderInput {
                 binding_id: 2,

@@ -1,0 +1,56 @@
+#version 450
+layout(local_size_x = 1) in;
+
+layout(set = 0, binding = 0) buffer Data {
+     float[] input_data;
+};
+
+readonly layout(set = 0, binding = 1) buffer Shape {
+    uint[] shape;
+};
+
+readonly layout(set = 0, binding = 2) buffer Strides {
+    uint[] strides;
+};
+
+readonly layout(set = 0, binding = 3) buffer StrideShapeLen {
+    uint stride_shape_len;
+};
+
+readonly layout(set = 0, binding = 4) buffer Offset {
+    uint offset;
+};
+
+layout(set = 0, binding = 5) buffer OutputBuffer {
+    float[] output_buffer;
+};
+
+uint traditional_stride_for_index(uint idx){
+    // find out where we are in each shape dimension and then multiply it by the stride
+    // calculate how many elements each shape dimension contains
+    uint acc = 1;
+    for (uint i = stride_shape_len-1; i >= idx+1; i--){
+        acc = acc*shape[i]; // Example Shape: [2  3 4]
+                            // Target Stride: [12 4 1]
+                            // for idx = 0 => 1*4*3
+    }
+    return acc;
+}
+
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    uint remainer = index;
+    uint offset = offset;
+
+    for (uint shape_idx = 0; shape_idx < stride_shape_len; shape_idx++){
+        uint idx = remainer / traditional_stride_for_index(shape_idx);
+        remainer = remainer % traditional_stride_for_index(shape_idx);
+        offset = offset + idx * strides[shape_idx];
+    }
+    offset += remainer;
+
+    output_buffer[index] = input_data[offset];
+}
+
+

@@ -1,15 +1,14 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, TensorTrait, GpuTensorViewMut};
+use crate::{GpuTensor, TensorTrait, GpuTensorView, ShapeStrides};
 use zerocopy::AsBytes;
 
 #[cfg(test)]
 mod tests;
 
-pub async fn assign<'a>(gpu: &GpuInstance, data: &mut GpuTensorViewMut<'a>, assign_data: f32) {
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("assign.spv"));
+pub async fn contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) -> GpuTensor {
+    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("contiguous.spv"));
 
-    let assign_data = GpuTensor::from_scalar(assign_data);
     let nb_output_numbers = data.numel();
 
     let shape_u32: Vec<u32> = data.shape().iter().map(|s| *s as u32).collect();
@@ -20,6 +19,7 @@ pub async fn assign<'a>(gpu: &GpuInstance, data: &mut GpuTensorViewMut<'a>, assi
     let shapes_strides_len = gpu.new_uniform_buffer(data.shape().len().as_bytes());
     let offset = gpu.new_uniform_buffer(data.shape_strides.offset.as_bytes());
 
+    let output = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
     gpu.run_shader(
         &cs_module,
         vec![
@@ -45,7 +45,7 @@ pub async fn assign<'a>(gpu: &GpuInstance, data: &mut GpuTensorViewMut<'a>, assi
             },
             ShaderInput {
                 binding_id: 5,
-                gpu_buffer: BufferType::Storage(assign_data.internal_gpu_buffer()),
+                gpu_buffer: BufferType::Storage(&output),
             },
         ],
         ThreadGroup {
@@ -54,4 +54,8 @@ pub async fn assign<'a>(gpu: &GpuInstance, data: &mut GpuTensorViewMut<'a>, assi
             z: 1,
         },
     );
+    GpuTensor{
+        buffer: output,
+        shape_strides: ShapeStrides::from_shape(data.shape().clone())
+    }
 }

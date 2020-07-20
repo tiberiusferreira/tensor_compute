@@ -20,3 +20,4 @@ fn main() {
     };
     futures::executor::block_on(async_block);
 }
+

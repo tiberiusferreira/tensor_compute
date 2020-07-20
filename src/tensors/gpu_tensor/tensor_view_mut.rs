@@ -1,36 +1,23 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, GpuTensor, ShapeStrides, TensorTrait, SliceRangeInfo};
+use crate::{CpuTensor, GpuTensor, ShapeStrides, TensorTrait};
 use std::collections::VecDeque;
 use crate::tensors::gpu_tensor::indexing::shape_strides_for_slice_range;
 
 
-/// A GpuTensorView share the same data as the original Tensor,
-/// but can have different shapes and strides
-/// For example, the original shape could be [2, 2] and the GpuTensorView could be [1, 2, 2]
-pub struct GpuTensorView<'a> {
-    original_tensor: &'a GpuTensor,
+/// Same as GpuTensorView but mutable
+pub struct GpuTensorViewMut<'a> {
+    original_tensor: &'a mut GpuTensor,
     pub shape_strides: ShapeStrides,
 }
 
-/// Used to temporarily modify how the underlying tensor data is interpreted, by changing the
-/// tensor shape or strides for example
-impl<'a> GpuTensorView<'a> {
-    pub fn from_tensor(gpu_tensor: &'a GpuTensor, dim_strides: ShapeStrides) -> Self {
+
+impl<'a> GpuTensorViewMut<'a> {
+    pub fn from_tensor(gpu_tensor: &'a mut GpuTensor, dim_strides: ShapeStrides) -> Self {
         Self {
-            original_tensor: &gpu_tensor,
+            original_tensor:  gpu_tensor,
             shape_strides: dim_strides,
         }
-    }
-
-    pub async fn to_tensor(&self) -> GpuTensor {
-        self.contiguous().await
-    }
-
-    pub fn i<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {
-        let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
-        let new_shape_strides = shape_strides_for_slice_range(&self.shape_strides, bounds);
-        GpuTensorView::from_tensor(self.original_tensor, new_shape_strides)
     }
 
     pub fn get_gpu(&self) -> &'static GpuInstance {
@@ -48,7 +35,7 @@ impl<'a> GpuTensorView<'a> {
         )
     }
 
-    pub fn internal_gpu_buffer(&self) -> &'a GpuBuffer {
+    pub fn internal_gpu_buffer(&'a self) -> &'a GpuBuffer {
         &self.original_tensor.internal_gpu_buffer()
     }
 
@@ -73,7 +60,7 @@ impl<'a> GpuTensorView<'a> {
     }
 }
 
-impl<'a> TensorTrait for GpuTensorView<'a> {
+impl<'a> TensorTrait for GpuTensorViewMut<'a> {
     fn shape(&self) -> &VecDeque<usize> {
         self.shape()
     }

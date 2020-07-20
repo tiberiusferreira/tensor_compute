@@ -9,7 +9,7 @@ pub fn can_transpose() {
         );
         let transposed = original.transpose().await.to_cpu().await;
         assert_eq!(
-            transposed.data_slice(),
+            transposed.raw_data_slice(),
             &[1.0, 4.0, 2.0, 5.0, 3.0, 6.0, 7.0, 10.0, 8.0, 11.0, 9.0, 12.0]
         );
     };

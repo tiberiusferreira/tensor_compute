@@ -12,6 +12,21 @@ pub struct CpuTensor {
     offset: usize,
 }
 
+impl PartialEq for CpuTensor{
+    fn eq(&self, other: &Self) -> bool {
+        if other.shape != self.shape{
+            return false;
+        }
+        let mut self_indexer = LinearIndexer::from_shape(self.shape());
+        while let Some((idx, _nb_dim_closed)) = self_indexer.next(){
+            if self.idx(idx) != other.idx(idx){
+                return false;
+            }
+        }
+        true
+    }
+}
+
 impl Display for CpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("Shape: ").unwrap();
@@ -19,7 +34,7 @@ impl Display for CpuTensor {
         f.write_str(" Strides: ").unwrap();
         self.strides.fmt(f).unwrap();
         f.write_str("\n").unwrap();
-        let mut indexer = LinearIndexer::new(&Vec::from(self.shape.clone()));
+        let mut indexer = LinearIndexer::from_shape_vec(&Vec::from(self.shape.clone()));
         for _i in 0..self.shape.len() {
             f.write_str("[").unwrap();
         }
@@ -29,7 +44,7 @@ impl Display for CpuTensor {
                 f.write_str("]").unwrap();
             }
             for _i in 0..dims_closed{
-                println!();
+                f.write_str("\n").unwrap();
                 // keep indentation
                 for _i in 0..ident - dims_closed{
                     f.write_str(" ").unwrap();
@@ -45,7 +60,7 @@ impl Display for CpuTensor {
         for _i in 0..self.shape.len() {
             f.write_str("]").unwrap();
         }
-        println!();
+        f.write_str("\n").unwrap();
         Ok(())
     }
 }
@@ -105,7 +120,7 @@ impl CpuTensor {
             self.offset,
         )
     }
-    pub fn data_slice(&self) -> &[f32] {
+    pub fn raw_data_slice(&self) -> &[f32] {
         &self.data.as_slice()
     }
 
@@ -136,7 +151,7 @@ struct LinearIndexer{
     started: bool
 }
 impl LinearIndexer{
-    pub fn new(shape: &Vec<usize>) -> Self{
+    pub fn from_shape_vec(shape: &Vec<usize>) -> Self{
         let new_vec: Vec<usize> = shape.iter().map(|_e| 0).collect();
         Self{
             curr_index: new_vec,
@@ -144,6 +159,16 @@ impl LinearIndexer{
             started: false
         }
     }
+
+    pub fn from_shape(shape: &VecDeque<usize>) -> Self{
+        let new_vec: Vec<usize> = shape.iter().map(|_e| 0).collect();
+        Self{
+            curr_index: new_vec,
+            max_index: Vec::from(shape.clone()),
+            started: false
+        }
+    }
+
     /// Returns the next index and the number of dimensions "closed" in this iteration
     pub fn next(&mut self) -> Option<(&Vec<usize>, usize)>{
         let mut nb_dims_closed: usize = 0;
@@ -172,11 +197,11 @@ impl LinearIndexer{
     }
 }
 
-#[test]
-fn indexer_works(){
-    let shape = vec![2, 3, 4];
-    let mut indexer = LinearIndexer::new(&shape);
-    while let Some(idx) = indexer.next(){
-        println!("{:?}", idx);
-    }
-}
+// #[test]
+// fn indexer_works(){
+//     let shape = vec![2, 3, 4];
+//     let mut indexer = LinearIndexer::new(&shape);
+//     while let Some(idx) = indexer.next(){
+//         println!("{:?}", idx);
+//     }
+// }

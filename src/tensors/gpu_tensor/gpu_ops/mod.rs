@@ -5,13 +5,21 @@ pub use relu::*;
 mod fill_with;
 mod transpose;
 mod assign;
+mod contiguous;
+pub use contiguous::*;
 pub use assign::*;
 use crate::tensors::TensorTrait;
-use crate::{GpuTensor, GpuTensorView};
+use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut};
 pub use fill_with::*;
 pub use transpose::transpose;
 
 impl <'a> GpuTensorView<'a>{
+    pub async fn contiguous(&self) -> GpuTensor {
+        contiguous(self.get_gpu(), self).await
+    }
+}
+
+impl <'a> GpuTensorViewMut<'a>{
     pub async fn assign_kernel(&mut self, data: f32) {
         assign(self.get_gpu(), self, data).await;
     }

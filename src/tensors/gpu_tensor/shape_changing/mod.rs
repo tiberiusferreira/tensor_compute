@@ -5,11 +5,11 @@ impl GpuTensor {
     pub fn increase_rank(&self) -> GpuTensorView {
         let mut new_dims = self.shape_strides.clone();
         new_dims.increase_rank();
-        GpuTensorView::new(self, new_dims)
+        GpuTensorView::from_tensor(self, new_dims)
     }
 
     pub fn view(&self) -> GpuTensorView {
-        GpuTensorView::new(self, self.dim_strides().clone())
+        GpuTensorView::from_tensor(self, self.dim_strides().clone())
     }
 
     /// Tensor are broadcastable if:
@@ -31,8 +31,8 @@ impl GpuTensor {
         let (broadcasted_curr, broadcasted_target) =
             broadcast_shape_and_stride(&current_shape, &target_shape, skipping_dims).unwrap();
         Some((
-            GpuTensorView::new(self, broadcasted_curr),
-            GpuTensorView::new(other, broadcasted_target),
+            GpuTensorView::from_tensor(self, broadcasted_curr),
+            GpuTensorView::from_tensor(other, broadcasted_target),
         ))
     }
 
