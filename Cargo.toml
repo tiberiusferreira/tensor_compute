@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 futures = "0.3.5"
-wgpu = {git = "https://github.com/gfx-rs/wgpu-rs.git"}
+wgpu = {git = "https://github.com/gfx-rs/wgpu-rs.git", features = ["trace"]}
 winit = "0.22.2"
 zerocopy = "0.3.0"
 bytemuck = "1.2.0"

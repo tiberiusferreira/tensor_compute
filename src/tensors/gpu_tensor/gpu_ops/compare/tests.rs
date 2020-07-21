@@ -9,6 +9,8 @@ fn compare_test() {
             let mut tensor_b = tensor_a.clone().await;
             assert!(tensor_a.eq(&tensor_b).await);
             tensor_b.assign(s!(0 ; 0), 50.).await;
+            println!("{:?}", tensor_a);
+            println!("{:?}", tensor_b);
             assert!(!tensor_a.eq(&tensor_b).await);
             tensor_b.assign(s!(0 ; 0), 0.).await;
             assert!(tensor_a.eq(&tensor_b).await);

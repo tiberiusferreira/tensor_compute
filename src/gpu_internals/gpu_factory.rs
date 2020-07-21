@@ -32,7 +32,6 @@ impl GpuFactory {
             .iter()
             .find(|adapter| &adapter.get_info() == gpu_info)
             .expect("Adapter does not exist for given GpuInfo");
-
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
@@ -40,7 +39,7 @@ impl GpuFactory {
                     limits: wgpu::Limits::default(),
                     shader_validation: true,
                 },
-                None,
+                Some(std::path::Path::new("traces")),
             )
             .await
             .unwrap();

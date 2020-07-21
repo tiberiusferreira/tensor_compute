@@ -1,45 +1,45 @@
 #version 450
 layout(local_size_x = 1) in;
 
-readonly layout(set = 0, binding = 0) buffer TenA {
+layout(set = 0, binding = 0) buffer TenA {
     float[] ten_a;
 };
 
-readonly layout(set = 0, binding = 1) buffer TenAShape {
-    uint[] shape_a;
+layout(set = 0, binding = 1) uniform TenAShape {
+    uint[20] shape_a;
 };
 
-readonly layout(set = 0, binding = 2) buffer TenAStrides {
-    uint[] strides_a;
+layout(set = 0, binding = 2) uniform TenAStrides {
+    uint[20] strides_a;
 };
 
-readonly layout(set = 0, binding = 3) buffer TenAStrideShapeLen {
+layout(set = 0, binding = 3) uniform TenAStrideShapeLen {
     uint stride_shape_len_a;
 };
 
-readonly layout(set = 0, binding = 4) buffer TenAOffset {
+layout(set = 0, binding = 4) uniform TenAOffset {
     uint offset_a;
 };
 
 
 
-readonly layout(set = 0, binding = 5) buffer TenB {
+layout(set = 0, binding = 5) buffer TenB {
     float[] ten_b;
 };
 
-readonly layout(set = 0, binding = 6) buffer TenBShape {
-    uint[] shape_b;
+layout(set = 0, binding = 6) uniform TenBShape {
+    uint[20] shape_b;
 };
 
-readonly layout(set = 0, binding = 7) buffer TenBStrides {
-    uint[] strides_b;
+layout(set = 0, binding = 7) uniform TenBStrides {
+    uint[20] strides_b;
 };
 
-readonly layout(set = 0, binding = 8) buffer TenBBtrideShapeLen {
+layout(set = 0, binding = 8) uniform TenBBtrideShapeLen {
     uint stride_shape_len_b;
 };
 
-readonly layout(set = 0, binding = 9) buffer TenBOffset {
+layout(set = 0, binding = 9) uniform TenBOffset {
     uint offset_b;
 };
 
@@ -103,5 +103,4 @@ void main() {
     if (ten_a[linear_offset_a] != ten_b[linear_offset_b]){
         output_val = 1;
     }
-
 }
