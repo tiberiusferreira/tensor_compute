@@ -447,15 +447,17 @@ checksum = "de27142b013a8e869c14957e6d2edeef89e97c289e69d042ee3a49acd8b51789"
 
 [[package]]
 name = "futures-lite"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af0bbcb0ec905ef6ee23fab499119b5da2362b8697d66e08d1ef01a8c0d438e2"
+checksum = "a0e4cb57cdb0f6077cb5d59d5fae4caf784e162a751457293c90295bbcbd2647"
 dependencies = [
  "fastrand",
  "futures-core",
  "futures-io",
  "memchr",
+ "parking",
  "pin-project-lite",
+ "waker-fn",
 ]
 
 [[package]]
@@ -1596,7 +1598,7 @@ dependencies = [
 [[package]]
 name = "wgpu"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu-rs.git#d91d046c0a2b75aec94006a1bbeee2955b7d9da6"
+source = "git+https://github.com/gfx-rs/wgpu-rs.git#e21bc3b9d6b77531e874446a1e821a6f8721a357"
 dependencies = [
  "arrayvec",
  "futures",
