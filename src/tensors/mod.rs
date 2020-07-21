@@ -36,8 +36,20 @@ pub struct TensorView<'a> {
 }
 
 impl<'a> TensorView<'a> {
-    pub async fn make_contiguous(&self) -> GpuTensor {
+    pub async fn make_contiguous_async(&self) -> GpuTensor {
         self.actual_tensor.contiguous().await
+    }
+
+    pub async fn make_contiguous(&self) -> GpuTensor {
+        block_on(self.actual_tensor.contiguous())
+    }
+
+    pub async fn compare_async(&self, other: &Self) -> bool{
+        self.actual_tensor.eq(&other.actual_tensor).await
+    }
+
+    pub async fn compare(&self, other: &Self) -> bool{
+        block_on(self.actual_tensor.eq(&other.actual_tensor))
     }
 }
 
@@ -53,7 +65,7 @@ impl Tensor {
     pub fn from_data(vec: Vec<f32>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         Tensor {
-            actual_tensor: GpuTensor::from_vec(vec),
+            actual_tensor: GpuTensor::from_data_1d(vec),
         }
     }
 
@@ -61,7 +73,7 @@ impl Tensor {
         assert!(!vec.is_empty(), "Data cant be empty!");
         assert!(!shape.is_empty(), "Shape cant be empty!");
         Tensor {
-            actual_tensor: GpuTensor::from_data_and_shape(vec, shape),
+            actual_tensor: GpuTensor::from(vec, shape),
         }
     }
 
@@ -135,13 +147,29 @@ impl Tensor {
         }
     }
 
+    pub async fn compare_async(&self, other: &Self) -> bool{
+        self.actual_tensor.view().eq(&other.actual_tensor.view()).await
+    }
+
+    pub async fn compare(&self, other: &Self) -> bool{
+        block_on(self.actual_tensor.view().eq(&other.actual_tensor.view()))
+    }
+
     /*******  Conversions  *******/
 
     /*******  Indexing Ops  *******/
-    pub fn i<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
+    pub fn slice<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
         TensorView {
-            actual_tensor: self.actual_tensor.i(indices),
+            actual_tensor: self.actual_tensor.slice(indices),
         }
+    }
+
+    pub async fn index_async(&self, indices: Vec<usize>) -> f32 {
+        self.actual_tensor.to_cpu().await.idx(&indices)
+    }
+
+    pub async fn index(&self, indices: Vec<usize>) -> f32 {
+        block_on(self.actual_tensor.to_cpu()).idx(&indices)
     }
 
     pub async fn assign_async<T: Into<SliceRangeInfo>>(&mut self, indices: Vec<T>, value: f32) {

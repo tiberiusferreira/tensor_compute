@@ -1,15 +1,15 @@
-use crate::GpuTensor;
+use crate::{GpuTensor, s};
 
 #[test]
 fn simple_assign() {
     let async_block = async {
-        let ma = GpuTensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
-        let mb = GpuTensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]);
-        let result = &ma.matmul(&mb).await;
+        let mut ma = GpuTensor::from((0..8).into_iter().map(|e|e as f32).collect(), vec![2, 2, 2]);
+        ma.assign(s!(0; 1), 10.).await;
         assert_eq!(
-            result.to_cpu().await.raw_data_slice(),
-            &[10., 13., 22., 29.]
+            ma.to_cpu().await.raw_data_slice(),
+            &[0., 1., 10., 10., 4., 5., 6., 7.]
         );
+        println!("{:?}", ma);
     };
     futures::executor::block_on(async_block);
 }

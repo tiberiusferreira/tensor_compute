@@ -110,7 +110,6 @@ impl From<(usize, usize, usize)> for SliceRangeInfo {
         SliceRangeInfo::new(tuple.0, Some(tuple.1), tuple.2)
     }
 }
-
 // Calls Into::<SliceRangeInfo>::into on each of its inputs and puts all of them into a Vector<SliceRangeInfo>
 #[macro_export]
 macro_rules! s (
@@ -119,7 +118,7 @@ macro_rules! s (
     ($($other_dims:expr);+) => {
     {
         let mut vector = Vec::new();
-        $(vector.push(Into::<SliceRangeInfo>::into($other_dims));)+
+        $(vector.push(Into::<$crate::SliceRangeInfo>::into($other_dims));)+
         vector
     }
     };

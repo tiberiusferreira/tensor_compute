@@ -183,8 +183,23 @@ checksum = "0c49e86fc36d5704151f5996b7b3795385f50ce09e3be0f47a0cfde869681cf8"
 dependencies = [
  "bitflags",
  "block",
- "core-foundation",
- "core-graphics",
+ "core-foundation 0.7.0",
+ "core-graphics 0.19.2",
+ "foreign-types",
+ "libc",
+ "objc",
+]
+
+[[package]]
+name = "cocoa"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "667fdc068627a2816b9ff831201dd9864249d6ee8d190b9532357f1fc0f61ea7"
+dependencies = [
+ "bitflags",
+ "block",
+ "core-foundation 0.9.0",
+ "core-graphics 0.21.0",
  "foreign-types",
  "libc",
  "objc",
@@ -211,7 +226,17 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57d24c7a13c43e870e37c1556b74555437870a04514f7685f5b354e090567171"
 dependencies = [
- "core-foundation-sys",
+ "core-foundation-sys 0.7.0",
+ "libc",
+]
+
+[[package]]
+name = "core-foundation"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b5ed8e7e76c45974e15e41bfa8d5b0483cd90191639e01d8f5f1e606299d3fb"
+dependencies = [
+ "core-foundation-sys 0.8.0",
  "libc",
 ]
 
@@ -222,13 +247,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3a71ab494c0b5b860bdc8407ae08978052417070c2ced38573a9157ad75b8ac"
 
 [[package]]
+name = "core-foundation-sys"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a21fa21941700a3cd8fcb4091f361a6a712fac632f85d9f487cc892045d55c6"
+
+[[package]]
 name = "core-graphics"
 version = "0.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3889374e6ea6ab25dba90bb5d96202f61108058361f6dc72e8b03e6f8bbe923"
 dependencies = [
  "bitflags",
- "core-foundation",
+ "core-foundation 0.7.0",
+ "foreign-types",
+ "libc",
+]
+
+[[package]]
+name = "core-graphics"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52a67c4378cf203eace8fb6567847eb641fd6ff933c1145a115c6ee820ebb978"
+dependencies = [
+ "bitflags",
+ "core-foundation 0.9.0",
  "foreign-types",
  "libc",
 ]
@@ -240,8 +283,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34ecad23610ad9757664d644e369246edde1803fcb43ed72876565098a5d3828"
 dependencies = [
  "cfg-if",
- "core-foundation-sys",
- "core-graphics",
+ "core-foundation-sys 0.7.0",
+ "core-graphics 0.19.2",
  "libc",
  "objc",
 ]
@@ -263,7 +306,7 @@ version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
 ]
@@ -413,7 +456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0b5a30a4328ab5473878237c447333c093297bded83a4983d10f4deea240d39"
 dependencies = [
  "proc-macro-hack",
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
 ]
@@ -524,16 +567,15 @@ dependencies = [
 
 [[package]]
 name = "gfx-backend-metal"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "412a1e0e53e9e325a7c2e0316f1a4e8a14cbe8d8bfb5f030bc3895692f8a8254"
+checksum = "77fe42f6685bac32650a52de5fd3adc2f72d316bbf85969b307f42abf5fce9b6"
 dependencies = [
  "arrayvec",
  "bitflags",
  "block",
- "cocoa",
+ "cocoa 0.22.0",
  "copyless",
- "core-graphics",
  "foreign-types",
  "gfx-auxil",
  "gfx-hal",
@@ -558,7 +600,7 @@ dependencies = [
  "arrayvec",
  "ash",
  "byteorder",
- "core-graphics",
+ "core-graphics 0.19.2",
  "gfx-hal",
  "lazy_static",
  "log",
@@ -697,9 +739,9 @@ checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 
 [[package]]
 name = "libc"
-version = "0.2.72"
+version = "0.2.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9f8082297d534141b30c8d39e9b1773713ab50fdbe4ff30f750d063b3bfd701"
+checksum = "bd7d4bd64732af4bf3a67f367c27df8520ad7e230c5817b8ff485864d80242b9"
 
 [[package]]
 name = "libloading"
@@ -780,14 +822,13 @@ dependencies = [
 
 [[package]]
 name = "metal"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e198a0ee42bdbe9ef2c09d0b9426f3b2b47d90d93a4a9b0395c4cea605e92dc0"
+checksum = "1f7ed263bb25a70ee127f56017cfc0916d1fc643be493a7c1e532700a0e57fda"
 dependencies = [
  "bitflags",
  "block",
- "cocoa",
- "core-graphics",
+ "cocoa 0.22.0",
  "foreign-types",
  "log",
  "objc",
@@ -929,7 +970,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffa5a33ddddfee04c0283a7653987d634e880347e96b5b2ed64de07efb59db9d"
 dependencies = [
  "proc-macro-crate",
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
 ]
@@ -1019,7 +1060,7 @@ version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a0ffd45cf79d88737d7cc85bfd5d2894bee1139b356e616fe85dc389c61aaf7"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
 ]
@@ -1074,9 +1115,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.18"
+version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beae6331a816b1f65d04c45b078fd8e6c93e8071771f41b8163255bbd8d7c8fa"
+checksum = "04f5f085b5d71e2188cb8271e5da0161ad52c3f227a661a3c135fdf28e258b12"
 dependencies = [
  "unicode-xid 0.2.1",
 ]
@@ -1102,7 +1143,7 @@ version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa563d17ecb180e500da1cfd2b028310ac758de548efdd203e18f283af693f37"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
 ]
 
 [[package]]
@@ -1254,11 +1295,11 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.34"
+version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "936cae2873c940d92e697597c5eee105fb570cd5689c695806f672883653349b"
+checksum = "fb7f4c519df8c117855e19dd8cc851e89eb746fe7a73f0157e0d95fdec5369b0"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "unicode-xid 0.2.1",
 ]
@@ -1269,7 +1310,7 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b834f2d66f734cb897113e34aaff2f1ab4719ca946f9a7358dba8f8064148701"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
  "unicode-xid 0.2.1",
@@ -1282,6 +1323,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb6bfa289a4d7c5766392812c0a1f4c1ba45afa1ad47803c11e1f407d846d75f"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "thiserror"
+version = "1.0.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dfdd070ccd8ccb78f4ad66bf1982dc37f620ef696c6b5028fe2ed83dd3d0d08"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd80fc12f73063ac132ac92aceea36734f04a1d93c1240c6944e23a3b8841793"
+dependencies = [
+ "proc-macro2 1.0.19",
+ "quote 1.0.7",
+ "syn",
 ]
 
 [[package]]
@@ -1381,7 +1442,7 @@ dependencies = [
  "bumpalo",
  "lazy_static",
  "log",
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
  "wasm-bindgen-shared",
@@ -1415,7 +1476,7 @@ version = "0.2.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf592c807080719d1ff2f245a687cbadb3ed28b2077ed7084b47aba8b691f2c6"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "quote 1.0.7",
  "syn",
  "wasm-bindgen-backend",
@@ -1501,7 +1562,7 @@ dependencies = [
 [[package]]
 name = "wgpu"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu-rs.git#9f868cd2cba28db334f25272f672bd05e3e52866"
+source = "git+https://github.com/gfx-rs/wgpu-rs.git#d91d046c0a2b75aec94006a1bbeee2955b7d9da6"
 dependencies = [
  "arrayvec",
  "futures",
@@ -1523,7 +1584,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu?rev=a0ed09a6a83dc0d16c6ad711cf139a5fcfbb9c35#a0ed09a6a83dc0d16c6ad711cf139a5fcfbb9c35"
+source = "git+https://github.com/gfx-rs/wgpu?rev=3c6ee8766ae8df8fc5c2b70f7c37d634ff3b79aa#3c6ee8766ae8df8fc5c2b70f7c37d634ff3b79aa"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1543,6 +1604,7 @@ dependencies = [
  "raw-window-handle",
  "smallvec",
  "spirv_headers",
+ "thiserror",
  "tracing",
  "wgpu-types",
 ]
@@ -1550,7 +1612,7 @@ dependencies = [
 [[package]]
 name = "wgpu-types"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu?rev=a0ed09a6a83dc0d16c6ad711cf139a5fcfbb9c35#a0ed09a6a83dc0d16c6ad711cf139a5fcfbb9c35"
+source = "git+https://github.com/gfx-rs/wgpu?rev=3c6ee8766ae8df8fc5c2b70f7c37d634ff3b79aa#3c6ee8766ae8df8fc5c2b70f7c37d634ff3b79aa"
 dependencies = [
  "bitflags",
 ]
@@ -1605,9 +1667,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e4ccbf7ddb6627828eace16cacde80fc6bf4dbb3469f88487262a02cf8e7862"
 dependencies = [
  "bitflags",
- "cocoa",
- "core-foundation",
- "core-graphics",
+ "cocoa 0.20.2",
+ "core-foundation 0.7.0",
+ "core-graphics 0.19.2",
  "core-video-sys",
  "dispatch",
  "instant",
@@ -1698,7 +1760,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d498dbd1fd7beb83c86709ae1c33ca50942889473473d287d56ce4770a18edfb"
 dependencies = [
- "proc-macro2 1.0.18",
+ "proc-macro2 1.0.19",
  "syn",
  "synstructure",
 ]

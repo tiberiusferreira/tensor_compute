@@ -21,6 +21,43 @@ pub struct GpuTensor {
     shape_strides: ShapeStrides,
 }
 
+use crate::gpu_internals::shader_runner::{ShaderInput, BufferType};
+use zerocopy::AsBytes;
+
+impl GpuTensor{
+    pub fn to_shader_inputs(&self, binding_offset: usize) -> Vec<ShaderInput>{
+        let shape: Vec<u32> = self.shape_strides.shape.iter().map(|&e| e as u32).collect();
+        let strides: Vec<u32> = self.shape_strides.strides.iter().map(|&e| e as u32).collect();
+        let shape_strides_len = self.shape_strides.shape.len() as u32;
+        let offset = self.shape_strides.offset as u32;
+        let shape_as_uniform = self.get_gpu().new_uniform_buffer(shape.as_slice().as_bytes());
+        let strides_as_uniform = self.get_gpu().new_uniform_buffer(strides.as_slice().as_bytes());
+        let shape_strides_len_as_uniform = self.get_gpu().new_uniform_buffer(shape_strides_len.as_bytes());
+        let offset_as_uniform = self.get_gpu().new_uniform_buffer(offset.as_bytes());
+        vec![
+            ShaderInput{
+                binding_id: binding_offset,
+                gpu_buffer: BufferType::Storage(self.internal_gpu_buffer()),
+            },
+            ShaderInput{
+                binding_id: binding_offset+1,
+                gpu_buffer: BufferType::UniformOwned(shape_as_uniform),
+            },
+            ShaderInput{
+                binding_id: binding_offset+2,
+                gpu_buffer: BufferType::UniformOwned(strides_as_uniform),
+            },
+            ShaderInput{
+                binding_id: binding_offset+3,
+                gpu_buffer: BufferType::UniformOwned(shape_strides_len_as_uniform),
+            },
+            ShaderInput{
+                binding_id: binding_offset+4,
+                gpu_buffer: BufferType::UniformOwned(offset_as_uniform),
+            }
+        ]
+    }
+}
 #[derive(Debug, Clone)]
 pub struct ShapeStrides {
     shape: VecDeque<usize>,

@@ -9,6 +9,8 @@ mod transpose;
 pub use make_contiguous::*;
 mod clone;
 pub use clone::*;
+mod compare;
+pub use compare::*;
 
 use crate::tensors::TensorTrait;
 use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut};
@@ -20,6 +22,9 @@ impl<'a> GpuTensorView<'a> {
     pub async fn contiguous(&self) -> GpuTensor {
         make_contiguous(self.get_gpu(), self).await
     }
+    pub async fn eq(&self, other: &Self) -> bool {
+        eq(self.get_gpu(), self, other).await
+    }
 }
 
 impl<'a> GpuTensorViewMut<'a> {
@@ -28,6 +33,10 @@ impl<'a> GpuTensorViewMut<'a> {
     }
 }
 impl GpuTensor {
+    pub async fn eq(&self, other: &Self) -> bool {
+        eq(self.get_gpu(), &self.view(), &other.view()).await
+    }
+
     pub async fn clone(&self) -> GpuTensor {
         clone(self.get_gpu(), self).await
     }

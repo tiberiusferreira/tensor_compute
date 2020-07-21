@@ -6,6 +6,7 @@ use crate::{
 };
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
+use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;
 
 impl Debug for GpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -51,7 +52,14 @@ impl GpuTensor {
             data.len(),
             "Shape is not valid for the size of the data!"
         );
-        CpuTensor::new(data, shape).to_gpu(gpu)
+        let shape = VecDeque::from(shape);
+        let strides = strides_from_deque_shape(&shape);
+        GpuTensor::from_buffer_with_strides_and_offset(
+            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&data)),
+            shape.clone(),
+            strides.clone(),
+            0
+        )
     }
 
     pub fn from_buffer(buffer: GpuBuffer, shape: VecDeque<usize>) -> Self {
@@ -73,15 +81,15 @@ impl GpuTensor {
         }
     }
 
-    pub fn from_vec(data: Vec<f32>) -> Self {
+    pub fn from(data: Vec<f32>, shape: Vec<usize>) -> Self {
+        let gpu = GpuStore::get_default();
+        Self::from_data_with_gpu(gpu, data, shape)
+    }
+
+    pub fn from_data_1d(data: Vec<f32>) -> Self {
         let len = data.len();
         let gpu = GpuStore::get_default();
         Self::from_data_with_gpu(gpu, data, vec![len])
-    }
-
-    pub fn from_data_and_shape(data: Vec<f32>, shape: Vec<usize>) -> Self {
-        let gpu = GpuStore::get_default();
-        Self::from_data_with_gpu(gpu, data, shape)
     }
 
     pub fn from_scalar(data: f32) -> Self {
@@ -108,7 +116,7 @@ impl GpuTensor {
         self.shape_strides.is_scalar()
     }
 
-    pub fn i<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {
+    pub fn slice<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {
         let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
         let new_shape_strides = shape_strides_for_slice_range(&self.shape_strides, bounds);
         GpuTensorView::from_tensor(self, new_shape_strides)

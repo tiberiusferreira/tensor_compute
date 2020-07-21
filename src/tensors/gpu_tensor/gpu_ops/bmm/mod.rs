@@ -47,7 +47,7 @@ pub async fn bmm_kernel<'a>(
         cols_b: input_data_b_view.shape()[2] as u32,
         stride_cols_b: input_data_b_view.strides()[2] as u32,
     };
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("mm.spv"));
+    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("bmm.spv"));
 
     let output_shape = vec![
         input_data_a_view.shape()[0],

@@ -1,0 +1,107 @@
+#version 450
+layout(local_size_x = 1) in;
+
+readonly layout(set = 0, binding = 0) buffer TenA {
+    float[] ten_a;
+};
+
+readonly layout(set = 0, binding = 1) buffer TenAShape {
+    uint[] shape_a;
+};
+
+readonly layout(set = 0, binding = 2) buffer TenAStrides {
+    uint[] strides_a;
+};
+
+readonly layout(set = 0, binding = 3) buffer TenAStrideShapeLen {
+    uint stride_shape_len_a;
+};
+
+readonly layout(set = 0, binding = 4) buffer TenAOffset {
+    uint offset_a;
+};
+
+
+
+readonly layout(set = 0, binding = 5) buffer TenB {
+    float[] ten_b;
+};
+
+readonly layout(set = 0, binding = 6) buffer TenBShape {
+    uint[] shape_b;
+};
+
+readonly layout(set = 0, binding = 7) buffer TenBStrides {
+    uint[] strides_b;
+};
+
+readonly layout(set = 0, binding = 8) buffer TenBBtrideShapeLen {
+    uint stride_shape_len_b;
+};
+
+readonly layout(set = 0, binding = 9) buffer TenBOffset {
+    uint offset_b;
+};
+
+layout(set = 0, binding = 10) buffer Output {
+    float output_val;
+};
+
+// Code duplication cant be avoided because functions cant take arrays of unkown size
+uint traditional_stride_for_index_ta(uint idx){
+    // find out where we are in each shape dimension and then multiply it by the stride
+    // calculate how many elements each shape dimension contains
+    uint acc = 1;
+    for (uint i = stride_shape_len_a-1; i >= idx+1; i--){
+        acc = acc*shape_a[i]; // Example Shape: [2  3 4]
+        // Target Stride: [12 4 1]
+        // for idx = 0 => 1*4*3
+    }
+    return acc;
+}
+
+uint linear_offset_for_ten_a(){
+    uint remainer = gl_GlobalInvocationID.x;
+    uint offset = offset_a;
+    for (uint shape_idx = 0; shape_idx < stride_shape_len_a; shape_idx++){
+        uint shape_idx_val = remainer / traditional_stride_for_index_ta(shape_idx);
+        remainer = remainer % traditional_stride_for_index_ta(shape_idx);
+        offset = offset + shape_idx_val * strides_a[shape_idx];
+    }
+    offset += remainer;
+    return offset;
+}
+
+
+uint traditional_stride_for_index_tb(uint idx){
+    // find out where we are in each shape dimension and then multiply it by the stride
+    // calculate how many elements each shape dimension contains
+    uint acc = 1;
+    for (uint i = stride_shape_len_b-1; i >= idx+1; i--){
+        acc = acc*shape_b[i]; // Example Shape: [2  3 4]
+        // Target Stride: [12 4 1]
+        // for idx = 0 => 1*4*3
+    }
+    return acc;
+}
+
+uint linear_offset_for_ten_b(){
+    uint remainer = gl_GlobalInvocationID.x;
+    uint offset = offset_b;
+    for (uint shape_idx = 0; shape_idx < stride_shape_len_b; shape_idx++){
+        uint shape_idx_val = remainer / traditional_stride_for_index_tb(shape_idx);
+        remainer = remainer % traditional_stride_for_index_tb(shape_idx);
+        offset = offset + shape_idx_val * strides_b[shape_idx];
+    }
+    offset += remainer;
+    return offset;
+}
+
+void main() {
+    uint linear_offset_a = linear_offset_for_ten_a();
+    uint linear_offset_b = linear_offset_for_ten_b();
+    if (ten_a[linear_offset_a] != ten_b[linear_offset_b]){
+        output_val = 1;
+    }
+
+}

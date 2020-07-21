@@ -38,8 +38,8 @@ void main() {
     uint curr_out_col = index_without_offset % rows_out;
 
     for (uint i=0; i < cols_a; i++){
-        indices_out[index] += indices_a[curr_batch_out*stride_batch_size_a + curr_out_row*stride_rows_a + i*stride_cols_a] *
-        indices_b[curr_batch_out*stride_batch_size_b + stride_rows_b*i + curr_out_col];
+        tensor_out[index] += tensor_a[curr_batch_out*stride_batch_size_a + curr_out_row*stride_rows_a + i*stride_cols_a] *
+        tensor_b[curr_batch_out*stride_batch_size_b + stride_rows_b*i + curr_out_col];
     }
 
 }

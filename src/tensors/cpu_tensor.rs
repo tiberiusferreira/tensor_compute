@@ -75,22 +75,22 @@ impl TensorTrait for CpuTensor {
 }
 
 impl CpuTensor {
-    pub fn new(data: Vec<f32>, shape: Vec<usize>) -> Self {
-        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
-        assert_eq!(
-            calc_size,
-            data.len(),
-            "Shape is not valid for the size of the data!"
-        );
-        let shape = VecDeque::from(shape);
-        let strides = strides_from_deque_shape(&shape);
-        Self {
-            data,
-            shape,
-            strides,
-            offset: 0,
-        }
-    }
+    // pub fn new(data: Vec<f32>, shape: Vec<usize>) -> Self {
+    //     let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+    //     assert_eq!(
+    //         calc_size,
+    //         data.len(),
+    //         "Shape is not valid for the size of the data!"
+    //     );
+    //     let shape = VecDeque::from(shape);
+    //     let strides = strides_from_deque_shape(&shape);
+    //     Self {
+    //         data,
+    //         shape,
+    //         strides,
+    //         offset: 0,
+    //     }
+    // }
     pub fn new_with_strides_and_offset(
         data: Vec<f32>,
         shape: VecDeque<usize>,
@@ -109,20 +109,20 @@ impl CpuTensor {
 }
 
 impl CpuTensor {
-    pub fn to_gpu(&self, gpu: &GpuInstance) -> GpuTensor {
-        GpuTensor::from_buffer_with_strides_and_offset(
-            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
-            self.shape.clone(),
-            self.strides.clone(),
-            self.offset,
-        )
-    }
+    // pub fn to_gpu(&self, gpu: &GpuInstance) -> GpuTensor {
+    //     GpuTensor::from_buffer_with_strides_and_offset(
+    //         gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
+    //         self.shape.clone(),
+    //         self.strides.clone(),
+    //         self.offset,
+    //     )
+    // }
     pub fn raw_data_slice(&self) -> &[f32] {
         &self.data.as_slice()
     }
 
     pub fn idx(&self, idx: &Vec<usize>) -> f32 {
-        assert_eq!(idx.len(), self.shape.len(), "index shape mismatch");
+        assert_eq!(idx.len(), self.shape.len(), "Tried to index shape: {:?} with index: {:?}", self.shape, idx);
         let strides_iter = self.strides.iter();
         let shape_iter = self.shape.iter();
         let idx_iter = idx.iter();
@@ -142,7 +142,7 @@ impl CpuTensor {
     }
 }
 
-struct LinearIndexer {
+pub struct LinearIndexer {
     curr_index: Vec<usize>,
     max_index: Vec<usize>,
     started: bool,

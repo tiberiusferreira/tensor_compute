@@ -5,6 +5,7 @@ use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 pub enum BufferType<'a> {
     Storage(&'a GpuBuffer),
     Uniform(&'a GpuUniformBuffer),
+    UniformOwned(GpuUniformBuffer),
 }
 
 impl<'a> BufferType<'a> {
@@ -12,12 +13,14 @@ impl<'a> BufferType<'a> {
         match self {
             BufferType::Storage(a) => a.layout(id),
             BufferType::Uniform(a) => a.layout(id),
+            BufferType::UniformOwned(a) => {a.layout(id)}
         }
     }
     pub fn to_bind_resource(&self) -> BindingResource {
         match self {
             BufferType::Storage(a) => a.to_bind_resource(),
             BufferType::Uniform(a) => a.to_bind_resource(),
+            BufferType::UniformOwned(a) => {a.to_bind_resource()}
         }
     }
 }
