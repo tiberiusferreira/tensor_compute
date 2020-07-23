@@ -3,22 +3,11 @@ mod gpu_tensor;
 use blocking::block_on;
 pub use cpu_tensor::*;
 pub use gpu_tensor::*;
+mod traits;
+pub use traits::*;
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
 
-pub trait TensorTrait {
-    fn shape(&self) -> &VecDeque<usize>;
-    fn strides(&self) -> &VecDeque<usize>;
-    fn rank(&self) -> usize {
-        self.shape().len()
-    }
-    fn numel(&self) -> usize {
-        Self::numel_from_shape(self.shape())
-    }
-    fn numel_from_shape(shape: &VecDeque<usize>) -> usize {
-        shape.iter().rev().fold(1, |acc: usize, &x| acc * x)
-    }
-}
 
 pub struct Tensor {
     actual_tensor: GpuTensor,
@@ -30,7 +19,6 @@ impl Debug for Tensor {
     }
 }
 
-// #[derive(Debug)]
 pub struct TensorView<'a> {
     actual_tensor: GpuTensorView<'a>,
 }
@@ -60,9 +48,10 @@ impl Clone for Tensor {
         }
     }
 }
+
 impl Tensor {
     /*******  Constructors  *******/
-    pub fn from_data(vec: Vec<f32>) -> Self {
+    pub fn from_data_1d(vec: Vec<f32>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         Tensor {
             actual_tensor: GpuTensor::from_data_1d(vec),
@@ -89,11 +78,7 @@ impl Tensor {
     }
 
     pub async fn zeros_like(other: &Self) -> Self {
-        Self::zeros(other.shape()).await
-    }
-
-    pub async fn empty() -> Self {
-        Self::zeros(vec![1]).await
+        Self::zeros(Vec::from(other.shape().clone())).await
     }
 
     pub async fn clone_async(&self) -> Self {
@@ -101,17 +86,16 @@ impl Tensor {
             actual_tensor: self.actual_tensor.clone().await,
         }
     }
-    /*******  Accessors  *******/
-    // pub async fn is_empty(&self) -> bool {
-    //     unimplemented!()
-    // }
 
-    pub fn shape(&self) -> Vec<usize> {
-        Vec::from(self.actual_tensor.shape().clone())
+
+    /*******  Accessors  *******/
+
+    pub fn shape(&self) -> &VecDeque<usize> {
+        self.actual_tensor.shape()
     }
 
-    pub fn strides(&self) -> Vec<usize> {
-        Vec::from(self.actual_tensor.strides().clone())
+    pub fn strides(&self) -> &VecDeque<usize> {
+        self.actual_tensor.strides()
     }
 
     /*******  Ops  *******/

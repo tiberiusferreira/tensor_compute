@@ -12,8 +12,8 @@ pub use clone::*;
 mod compare;
 pub use compare::*;
 
-use crate::tensors::TensorTrait;
-use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut};
+use crate::tensors::ShapeStrideTrait;
+use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut, GpuAllocated};
 pub use assign::*;
 pub use fill_with::*;
 pub use transpose::transpose;

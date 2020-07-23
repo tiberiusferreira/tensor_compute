@@ -1,4 +1,4 @@
-use crate::{GpuTensor, GpuTensorView, ShapeStrides};
+use crate::{GpuTensor, GpuTensorView, ShapeStrides, GpuAllocated};
 mod broadcast_tests;
 mod slicing_tests;
 impl GpuTensor {

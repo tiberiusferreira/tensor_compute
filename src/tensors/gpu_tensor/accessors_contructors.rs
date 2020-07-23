@@ -1,33 +1,45 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
 use crate::tensors::gpu_tensor::indexing::{shape_strides_for_slice_range, SliceRangeInfo};
-use crate::{
-    CpuTensor, GpuStore, GpuTensor, GpuTensorView, GpuTensorViewMut, ShapeStrides, TensorTrait,
-};
+use crate::{CpuTensor, GpuStore, GpuTensor, GpuTensorView, GpuTensorViewMut, ShapeStrides, ShapeStrideTrait, GpuAllocated, CpuTransferable};
 use std::collections::VecDeque;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Formatter, Display};
 use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;
-
+use async_trait::async_trait;
 impl Debug for GpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let k = blocking::block_on(self.to_cpu());
-        std::fmt::Display::fmt(&k, f)
+        Display::fmt(&k, f)
+    }
+}
+
+#[async_trait(?Send)]
+impl GpuAllocated for GpuTensor{
+    fn get_gpu(&self) -> &'static GpuInstance {
+        GpuStore::get(self.buffer.device_info())
+    }
+
+    fn internal_gpu_buffer(&self) -> &GpuBuffer {
+        &self.buffer
+    }
+
+}
+
+impl ShapeStrideTrait for GpuTensor {
+    fn shape(&self) -> &VecDeque<usize> {
+        &self.shape_strides.shape
+    }
+
+    fn strides(&self) -> &VecDeque<usize> {
+        &self.shape_strides.strides
+    }
+
+    fn offset(&self) -> usize {
+        self.shape_strides.offset
     }
 }
 
 impl GpuTensor {
-    // Accessors
-    pub fn internal_gpu_buffer(&self) -> &GpuBuffer {
-        &self.buffer
-    }
-
-    pub fn get_gpu(&self) -> &'static GpuInstance {
-        GpuStore::get(self.buffer.device_info())
-    }
-
-    pub fn buffer_size_in_bytes(&self) -> usize {
-        self.internal_gpu_buffer().size_bytes()
-    }
 
     pub async fn uninitialized(shape: Vec<usize>) -> GpuTensor {
         Self::new_filled(shape, 0.).await
@@ -97,16 +109,6 @@ impl GpuTensor {
         Self::from_data_with_gpu(gpu, vec![data], vec![1])
     }
 
-    pub async fn to_cpu(&self) -> CpuTensor {
-        let gpu = self.get_gpu();
-        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.internal_gpu_buffer()).await;
-        CpuTensor::new_with_strides_and_offset(
-            buffer_in_cpu_mem,
-            self.shape().clone(),
-            self.strides().clone(),
-            self.shape_strides.offset,
-        )
-    }
 
     pub fn dim_strides(&self) -> &ShapeStrides {
         &self.shape_strides
@@ -130,22 +132,3 @@ impl GpuTensor {
     }
 }
 
-// #[test]
-// fn test_bounds() {
-//     let block = async {
-//         let a = GpuTensor::uninitialized(vec![3, 3]).await;
-//         a.index(s!(2; (2,2,2); 3));
-//         a.index(s!(2; (2,2,2)));
-//     };
-//     futures::executor::block_on(block);
-// }
-
-impl TensorTrait for GpuTensor {
-    fn shape(&self) -> &VecDeque<usize> {
-        &self.shape_strides.shape
-    }
-
-    fn strides(&self) -> &VecDeque<usize> {
-        &self.shape_strides.strides
-    }
-}

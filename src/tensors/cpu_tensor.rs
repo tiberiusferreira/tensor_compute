@@ -1,6 +1,6 @@
 use crate::gpu_internals::GpuInstance;
 use crate::utils::strides_from_deque_shape;
-use crate::{GpuTensor, TensorTrait};
+use crate::{GpuTensor, ShapeStrideTrait};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -64,13 +64,17 @@ impl Display for CpuTensor {
         Ok(())
     }
 }
-impl TensorTrait for CpuTensor {
+impl ShapeStrideTrait for CpuTensor {
     fn shape(&self) -> &VecDeque<usize> {
         &self.shape
     }
 
     fn strides(&self) -> &VecDeque<usize> {
         &self.strides
+    }
+
+    fn offset(&self) -> usize {
+        self.offset
     }
 }
 

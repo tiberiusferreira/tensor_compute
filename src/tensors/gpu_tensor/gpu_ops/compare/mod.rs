@@ -1,6 +1,6 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, TensorTrait, GpuTensorView};
+use crate::{GpuTensor, ShapeStrideTrait, GpuTensorView, GpuAllocated, CpuTransferable, AsShaderInput};
 use zerocopy::AsBytes;
 use std::collections::VecDeque;
 
