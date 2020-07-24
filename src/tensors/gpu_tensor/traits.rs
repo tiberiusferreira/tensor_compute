@@ -35,8 +35,18 @@ impl <T> CpuTransferable for T where T: GpuAllocated + ShapeStrideTrait {
 
 pub trait AsShaderInput: GpuAllocated + ShapeStrideTrait{
     fn to_shader_inputs(&self, binding_offset: usize) -> Vec<ShaderInput>{
-        let shape: Vec<u32> = self.shape().iter().map(|&e| e as u32).collect();
-        let strides: Vec<u32> = self.strides().iter().map(|&e| e as u32).collect();
+        let mut shape: Vec<u128> = self.shape().iter().map(|&e| e as u128).collect();
+        let mut strides: Vec<u128> = self.strides().iter().map(|&e| e as u128).collect();
+        // Uniform Buffer elements need to be 128bits each:
+        // see https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf page 146 (pdf page 168)
+        assert!(shape.len() <= 20, "Shape cant have more than 20 elements");
+        assert!(strides.len() <= 20, "Strides cant have more than 20 elements");
+        while shape.len() < 20{
+            shape.push(0);
+        }
+        while strides.len() < 20{
+            strides.push(0);
+        }
         let shape_strides_len = self.shape().len() as u32;
         let offset = self.offset() as u32;
         let shape_as_uniform = self.get_gpu().new_uniform_buffer(shape.as_slice().as_bytes());

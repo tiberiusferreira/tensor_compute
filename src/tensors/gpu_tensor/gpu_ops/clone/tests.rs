@@ -1,4 +1,4 @@
-use crate::{s, GpuTensor, SliceRangeInfo};
+use crate::{GpuTensor, prelude::*};
 
 #[test]
 fn can_clone() {

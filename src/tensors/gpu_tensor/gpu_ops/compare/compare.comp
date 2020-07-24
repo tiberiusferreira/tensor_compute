@@ -98,9 +98,9 @@ uint linear_offset_for_ten_b(){
 }
 
 void main() {
-//    uint linear_offset_a = linear_offset_for_ten_a();
-//    uint linear_offset_b = linear_offset_for_ten_b();
-//    if (ten_a[linear_offset_a] != ten_b[linear_offset_b]){
-//        output_val = 1;
-//    }
+    uint linear_offset_a = linear_offset_for_ten_a();
+    uint linear_offset_b = linear_offset_for_ten_b();
+    if (ten_a[linear_offset_a] != ten_b[linear_offset_b]){
+        output_val = 1;
+    }
 }

@@ -1,4 +1,6 @@
-use crate::{GpuTensor, s};
+use crate::prelude::*;
+use crate::{GpuTensor};
+
 
 #[test]
 fn simple_assign() {

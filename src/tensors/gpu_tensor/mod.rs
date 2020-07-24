@@ -11,7 +11,7 @@ mod tensor_view_mut;
 use crate::gpu_internals::GpuInstance;
 pub use tensor_view_mut::*;
 
-mod traits;
+pub mod traits;
 pub use traits::*;
 mod gpu_ops;
 mod indexing;
@@ -23,8 +23,6 @@ pub struct GpuTensor {
     shape_strides: ShapeStrides,
 }
 
-use crate::gpu_internals::shader_runner::{ShaderInput, BufferType};
-use zerocopy::AsBytes;
 
 #[derive(Debug, Clone)]
 pub struct ShapeStrides {

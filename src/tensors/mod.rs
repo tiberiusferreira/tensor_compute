@@ -3,11 +3,11 @@ mod gpu_tensor;
 use blocking::block_on;
 pub use cpu_tensor::*;
 pub use gpu_tensor::*;
-mod traits;
+pub mod traits;
 pub use traits::*;
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
-
+pub mod prelude;
 
 pub struct Tensor {
     actual_tensor: GpuTensor,
@@ -51,6 +51,17 @@ impl Clone for Tensor {
 
 impl Tensor {
     /*******  Constructors  *******/
+
+    /// Returns a 1 dimensional `Tensor` with the given data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// assert_eq!(tensor.shape(), &[4]);
+    /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
+    /// ```
     pub fn from_data_1d(vec: Vec<f32>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         Tensor {
@@ -58,6 +69,17 @@ impl Tensor {
         }
     }
 
+    /// Returns a N dimensional `Tensor` with the given data and shape.
+    /// Panics if shape does not match the data.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
+    /// ```
     pub fn from_data_and_shape(vec: Vec<f32>, shape: Vec<usize>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         assert!(!shape.is_empty(), "Shape cant be empty!");
@@ -66,19 +88,95 @@ impl Tensor {
         }
     }
 
-    pub async fn zeros(shape: Vec<usize>) -> Self {
+    /// Returns a N dimensional `Tensor` with the given shape filled with zeros.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::zeros(vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![0., 0., 0., 0.]);
+    /// ```
+    pub fn zeros(shape: Vec<usize>) -> Self {
+        block_on(Tensor::zeros_async(shape))
+    }
+
+    /// Same as [Tensor::zeros], but async.
+    pub async fn zeros_async(shape: Vec<usize>) -> Self {
         assert!(!shape.is_empty(), "Shape cant be empty!");
         Self {
             actual_tensor: GpuTensor::new_filled(shape, 0.).await,
         }
     }
 
-    pub async fn rand(_shape: Vec<usize>) -> Self {
-        unimplemented!()
+    /// Returns a N dimensional `Tensor` with the given shape filled with random values
+    /// between 0 and 1.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    /// let result = tensor.to_cpu().as_contiguous_vec();
+    /// for val in &result{
+    ///     assert!(*val >= 0.);
+    ///     assert!(*val <= 1.);
+    /// }
+    ///
+    /// ```
+    pub fn rand(shape: Vec<usize>) -> Self {
+        Self{
+            actual_tensor: CpuTensor::rand(shape).to_gpu()
+        }
     }
 
-    pub async fn zeros_like(other: &Self) -> Self {
-        Self::zeros(Vec::from(other.shape().clone())).await
+    /// Returns a N dimensional `Tensor` with the given shape filled with random values
+    /// between 0 and 1.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    /// let result = tensor.to_cpu().as_contiguous_vec();
+    /// for val in &result{
+    ///     assert!(*val >= 0.);
+    ///     assert!(*val <= 1.);
+    /// }
+    ///
+    /// ```
+    pub fn zeros_like(other: &Self) -> Self {
+        Self::zeros(Vec::from(other.shape().clone()))
+    }
+
+    /// Same as [Tensor::zeros_like], but async.
+    pub async fn zeros_like_async(other: &Self) -> Self {
+        Self::zeros_async(Vec::from(other.shape().clone())).await
+    }
+
+    /// Clones self, turning a new [Tensor]
+    /// between 0 and 1.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    /// let result = tensor.to_cpu().as_contiguous_vec();
+    /// for val in &result{
+    ///     assert!(*val >= 0.);
+    ///     assert!(*val <= 1.);
+    /// }
+    ///
+    /// ```
+    pub fn clone(&self) -> Self {
+        Self {
+            actual_tensor: block_on(self.actual_tensor.clone()),
+        }
     }
 
     pub async fn clone_async(&self) -> Self {
@@ -86,7 +184,6 @@ impl Tensor {
             actual_tensor: self.actual_tensor.clone().await,
         }
     }
-
 
     /*******  Accessors  *******/
 
@@ -106,6 +203,7 @@ impl Tensor {
     pub fn fill_with(&mut self, value: f32) {
         block_on(self.actual_tensor.fill_with(value));
     }
+
 
     pub async fn matmul_async(&mut self, other: &Self) -> Self {
         Self {
@@ -140,6 +238,14 @@ impl Tensor {
     }
 
     /*******  Conversions  *******/
+    pub async fn to_cpu_async(&self) -> CpuTensor {
+        self.actual_tensor.to_cpu().await
+    }
+
+    pub fn to_cpu(&self) -> CpuTensor {
+        block_on(self.actual_tensor.to_cpu())
+    }
+
 
     /*******  Indexing Ops  *******/
     pub fn slice<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {

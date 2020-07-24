@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
-use crate::{GpuTensor, Tensor};
+pub use super::gpu_tensor::traits::*;
 use async_trait::async_trait;
-
 pub trait ShapeStrideTrait {
     fn shape(&self) -> &VecDeque<usize>;
     fn strides(&self) -> &VecDeque<usize>;

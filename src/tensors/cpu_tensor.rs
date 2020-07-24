@@ -1,8 +1,9 @@
 use crate::gpu_internals::GpuInstance;
 use crate::utils::strides_from_deque_shape;
-use crate::{GpuTensor, ShapeStrideTrait};
+use crate::{GpuTensor, ShapeStrideTrait, GpuStore};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter};
+
 
 #[derive(Debug)]
 pub struct CpuTensor {
@@ -79,22 +80,42 @@ impl ShapeStrideTrait for CpuTensor {
 }
 
 impl CpuTensor {
-    // pub fn new(data: Vec<f32>, shape: Vec<usize>) -> Self {
-    //     let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
-    //     assert_eq!(
-    //         calc_size,
-    //         data.len(),
-    //         "Shape is not valid for the size of the data!"
-    //     );
-    //     let shape = VecDeque::from(shape);
-    //     let strides = strides_from_deque_shape(&shape);
-    //     Self {
-    //         data,
-    //         shape,
-    //         strides,
-    //         offset: 0,
-    //     }
-    // }
+    pub fn from_data_and_shape(data: Vec<f32>, shape: Vec<usize>) -> Self {
+        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+        assert_eq!(
+            calc_size,
+            data.len(),
+            "Shape is not valid for the size of the data!"
+        );
+        let shape = VecDeque::from(shape);
+        let strides = strides_from_deque_shape(&shape);
+        Self {
+            data,
+            shape,
+            strides,
+            offset: 0,
+        }
+    }
+
+    pub fn rand(shape: Vec<usize>) -> Self {
+        use rand::Rng;
+        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+        let mut rng = rand::thread_rng();
+        let mut data = Vec::with_capacity(calc_size);
+        for _i in 0..calc_size {
+            data.push(rng.gen());
+        }
+        let shape = VecDeque::from(shape);
+        let strides = strides_from_deque_shape(&shape);
+        Self {
+            data,
+            shape,
+            strides,
+            offset: 0,
+        }
+    }
+
+
     pub fn new_with_strides_and_offset(
         data: Vec<f32>,
         shape: VecDeque<usize>,
@@ -113,16 +134,26 @@ impl CpuTensor {
 }
 
 impl CpuTensor {
-    // pub fn to_gpu(&self, gpu: &GpuInstance) -> GpuTensor {
-    //     GpuTensor::from_buffer_with_strides_and_offset(
-    //         gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
-    //         self.shape.clone(),
-    //         self.strides.clone(),
-    //         self.offset,
-    //     )
-    // }
+    pub fn to_gpu(&self) -> GpuTensor {
+        let gpu = GpuStore::get_default();
+        GpuTensor::from_buffer_with_strides_and_offset(
+            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
+            self.shape.clone(),
+            self.strides.clone(),
+            self.offset,
+        )
+    }
     pub fn raw_data_slice(&self) -> &[f32] {
         &self.data.as_slice()
+    }
+
+    pub fn as_contiguous_vec(&self) -> Vec<f32> {
+        let mut indexer = LinearIndexer::from_shape(self.shape());
+        let mut output = Vec::with_capacity(self.numel());
+        while let Some((val, _)) = indexer.next(){
+            output.push(self.idx(val));
+        }
+        output
     }
 
     pub fn idx(&self, idx: &Vec<usize>) -> f32 {
