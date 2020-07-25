@@ -1,4 +1,4 @@
-use crate::{s, GpuTensor, SliceRangeInfo};
+use crate::{s, GpuTensor};
 use crate::prelude::*;
 #[test]
 fn can_create_contiguous_from_view() {

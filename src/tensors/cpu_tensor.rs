@@ -1,4 +1,3 @@
-use crate::gpu_internals::GpuInstance;
 use crate::utils::strides_from_deque_shape;
 use crate::{GpuTensor, ShapeStrideTrait, GpuStore};
 use std::collections::VecDeque;

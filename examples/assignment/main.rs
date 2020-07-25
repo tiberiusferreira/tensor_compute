@@ -1,4 +1,4 @@
-use gpu_compute::{s, GpuStore, SliceRangeInfo, Tensor};
+use gpu_compute::{s, GpuStore, Tensor};
 
 fn main() {
     println!("Running in {:?}", GpuStore::get_default().info());

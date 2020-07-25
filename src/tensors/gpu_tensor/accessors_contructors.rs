@@ -1,7 +1,7 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
 use crate::tensors::gpu_tensor::indexing::{shape_strides_for_slice_range, SliceRangeInfo};
-use crate::{CpuTensor, GpuStore, GpuTensor, GpuTensorView, GpuTensorViewMut, ShapeStrides, ShapeStrideTrait, GpuAllocated, CpuTransferable};
+use crate::{GpuStore, GpuTensor, GpuTensorView, GpuTensorViewMut, ShapeStrides, ShapeStrideTrait, GpuAllocated, CpuTransferable};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter, Display};
 use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;

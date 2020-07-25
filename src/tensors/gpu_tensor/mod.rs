@@ -8,7 +8,6 @@ use std::collections::VecDeque;
 mod tensor_view;
 pub use tensor_view::*;
 mod tensor_view_mut;
-use crate::gpu_internals::GpuInstance;
 pub use tensor_view_mut::*;
 
 pub mod traits;

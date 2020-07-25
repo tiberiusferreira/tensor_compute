@@ -1,6 +1,6 @@
 use crate::gpu_internals::GpuInstance;
 use std::convert::TryInto;
-use wgpu::{AdapterInfo, Buffer, MapMode, Maintain};
+use wgpu::{AdapterInfo, Buffer};
 
 pub struct GpuBuffer {
     /// The WebGPU buffer itself

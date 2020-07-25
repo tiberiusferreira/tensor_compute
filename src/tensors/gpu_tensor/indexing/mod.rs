@@ -130,9 +130,9 @@ macro_rules! s (
     each separated by ';'") };
 );
 
-#[test]
-fn test() {
-    let a = SliceRangeInfo::from((0..3));
-    // let b: dyn Into<Slice> = (0..4);
-    println!("{:?}", a);
-}
+// #[test]
+// fn test() {
+//     let a = SliceRangeInfo::from((0..3));
+//     // let b: dyn Into<Slice> = (0..4);
+//     println!("{:?}", a);
+// }
