@@ -1,23 +1,23 @@
-use gpu_compute::{GpuTensor};
+use gpu_compute::{GpuTensor, CpuTransferable};
 
 fn main() {
-    for _i in 0..100{
-        let async_block = async {
-            let tensor_a =
-                GpuTensor::from((0..6).map(|e| e as f32).collect(), vec![3, 2]);
-            let tensor_b = tensor_a.clone().await;
-            assert!(tensor_a.eq(&tensor_b).await);
-            // tensor_b.assign(s!(0 ; 0), 50.).await;
-            // println!("{:?}", tensor_a);
-            // println!("{:?}", tensor_b);
-            // assert!(!tensor_a.eq(&tensor_b).await);
-            // tensor_b.assign(s!(0 ; 0), 0.).await;
-            // assert!(tensor_a.eq(&tensor_b).await);
-            // tensor_b.assign(s!(2 ; 1), 3.).await;
-            // assert!(!tensor_a.eq(&tensor_b).await);
-            // println!("{:?}", tensor_a);
-            // println!("{:?}", tensor_b);
-        };
-        futures::executor::block_on(async_block);
+    let mut handles = vec![];
+    for _i in 0..2000 {
+        let handle = std::thread::spawn(|| {
+            let async_block = async {
+                let mut tensor =
+                    GpuTensor::from(vec![-1., -2., -3., -4., 5., 6.], vec![3, 2]);
+                tensor.fill_with(10.).await;
+                assert_eq!(
+                    tensor.to_cpu().await.raw_data_slice(),
+                    &[10., 10., 10., 10., 10., 10.]
+                );
+            };
+            futures::executor::block_on(async_block);
+        });
+        handles.push(handle);
+    }
+    for handle in handles{
+        handle.join().unwrap();
     }
 }

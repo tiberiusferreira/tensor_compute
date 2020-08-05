@@ -1,6 +1,7 @@
 use crate::gpu_internals::GpuInstance;
 use std::convert::TryInto;
 use wgpu::{AdapterInfo, Buffer};
+use wgpu::util::DeviceExt;
 
 pub struct GpuBuffer {
     /// The WebGPU buffer itself
@@ -94,9 +95,14 @@ impl GpuInstance {
     }
 
     pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer {
+        let buffer_descriptor = wgpu::util::BufferInitDescriptor{
+            label: None,
+            contents: input_bytes,
+            usage: wgpu::BufferUsage::UNIFORM
+        };
         let buffer = self
             .device()
-            .create_buffer_with_data(input_bytes, wgpu::BufferUsage::UNIFORM);
+            .create_buffer_init(&buffer_descriptor);
 
         GpuUniformBuffer {
             buffer,
@@ -109,10 +115,12 @@ impl GpuInstance {
     /// it into host-visible memory, copies data from the given slice,
     /// and finally unmaps it, returning a [`Buffer`].
     pub fn new_gpu_buffer_from_data(&self, input_bytes: &[u8]) -> GpuBuffer {
-        let buffer = self.device().create_buffer_with_data(
-            input_bytes,
-            wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC,
-        );
+        let buffer_descriptor = wgpu::util::BufferInitDescriptor{
+            label: None,
+            contents: input_bytes,
+            usage:  wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_SRC
+        };
+        let buffer = self.device().create_buffer_init(&buffer_descriptor);
         GpuBuffer {
             buffer,
             size_bytes: input_bytes.len(),
