@@ -1,5 +1,5 @@
 
-# Rust GPU Compute   
+# Rust Tensor Compute   
 
 This is a personal project to teach myself WebGPU computing, focused   
 on Machine Learning application.  
