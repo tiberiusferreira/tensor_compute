@@ -6,8 +6,7 @@ on Machine Learning application.
 
 Features for now:
 
-- Select which GPU to use (if more than 1 in system)
-
+- [X] Select which GPU to use (if more than 1 in system)
 - [X] Clone
 - [X] (Batch) Matmul
 - [X] Relu
