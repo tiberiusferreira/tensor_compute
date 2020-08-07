@@ -1,8 +1,7 @@
 use crate::utils::strides_from_deque_shape;
-use crate::{GpuTensor, ShapeStrideTrait, GpuStore};
+use crate::{GpuStore, GpuTensor, ShapeStrideTrait};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter};
-
 
 #[derive(Debug)]
 pub struct CpuTensor {
@@ -114,7 +113,6 @@ impl CpuTensor {
         }
     }
 
-
     pub fn new_with_strides_and_offset(
         data: Vec<f32>,
         shape: VecDeque<usize>,
@@ -149,14 +147,20 @@ impl CpuTensor {
     pub fn as_contiguous_vec(&self) -> Vec<f32> {
         let mut indexer = LinearIndexer::from_shape(self.shape());
         let mut output = Vec::with_capacity(self.numel());
-        while let Some((val, _)) = indexer.next(){
+        while let Some((val, _)) = indexer.next() {
             output.push(self.idx(val));
         }
         output
     }
 
     pub fn idx(&self, idx: &Vec<usize>) -> f32 {
-        assert_eq!(idx.len(), self.shape.len(), "Tried to index shape: {:?} with index: {:?}", self.shape, idx);
+        assert_eq!(
+            idx.len(),
+            self.shape.len(),
+            "Tried to index shape: {:?} with index: {:?}",
+            self.shape,
+            idx
+        );
         let strides_iter = self.strides.iter();
         let shape_iter = self.shape.iter();
         let idx_iter = idx.iter();

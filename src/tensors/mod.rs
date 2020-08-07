@@ -4,9 +4,9 @@ use blocking::block_on;
 pub use cpu_tensor::*;
 pub use gpu_tensor::*;
 pub mod traits;
-pub use traits::*;
 use std::collections::VecDeque;
 use std::fmt::{Debug, Formatter};
+pub use traits::*;
 pub mod prelude;
 
 pub struct Tensor {
@@ -32,11 +32,11 @@ impl<'a> TensorView<'a> {
         block_on(self.actual_tensor.contiguous())
     }
 
-    pub async fn compare_async(&self, other: &Self) -> bool{
+    pub async fn compare_async(&self, other: &Self) -> bool {
         self.actual_tensor.eq(&other.actual_tensor).await
     }
 
-    pub async fn compare(&self, other: &Self) -> bool{
+    pub async fn compare(&self, other: &Self) -> bool {
         block_on(self.actual_tensor.eq(&other.actual_tensor))
     }
 }
@@ -52,7 +52,7 @@ impl Clone for Tensor {
 impl Tensor {
     /*******  Constructors  *******/
 
-    /// Returns a 1 dimensional `Tensor` with the given data.
+    /// Returns a 1 dimensional [`Tensor`] with the given data.
     ///
     /// # Examples
     ///
@@ -69,7 +69,7 @@ impl Tensor {
         }
     }
 
-    /// Returns a N dimensional `Tensor` with the given data and shape.
+    /// Returns a N dimensional [`Tensor`] with the given data and shape.
     /// Panics if shape does not match the data.
     ///
     /// # Examples
@@ -88,7 +88,7 @@ impl Tensor {
         }
     }
 
-    /// Returns a N dimensional `Tensor` with the given shape filled with zeros.
+    /// Returns a N dimensional [`Tensor`] with the given shape filled with zeros.
     ///
     /// # Examples
     ///
@@ -102,7 +102,7 @@ impl Tensor {
         block_on(Tensor::zeros_async(shape))
     }
 
-    /// Same as [Tensor::zeros], but async.
+    /// Same as [`Tensor::zeros`], but async.
     pub async fn zeros_async(shape: Vec<usize>) -> Self {
         assert!(!shape.is_empty(), "Shape cant be empty!");
         Self {
@@ -110,7 +110,7 @@ impl Tensor {
         }
     }
 
-    /// Returns a N dimensional `Tensor` with the given shape filled with random values
+    /// Returns a N dimensional [`Tensor`] with the given shape filled with random values
     /// between 0 and 1.
     ///
     /// # Examples
@@ -127,50 +127,43 @@ impl Tensor {
     ///
     /// ```
     pub fn rand(shape: Vec<usize>) -> Self {
-        Self{
-            actual_tensor: CpuTensor::rand(shape).to_gpu()
+        Self {
+            actual_tensor: CpuTensor::rand(shape).to_gpu(),
         }
     }
 
-    /// Returns a N dimensional `Tensor` with the given shape filled with random values
-    /// between 0 and 1.
+    /// Returns a [`Tensor`] filled with zeros with same shape as the input [`Tensor`]
     ///
     /// # Examples
     ///
     /// ```
     /// use gpu_compute::Tensor;
-    /// let tensor = Tensor::rand(vec![2, 2]);
-    /// assert_eq!(tensor.shape(), &[2, 2]);
-    /// let result = tensor.to_cpu().as_contiguous_vec();
-    /// for val in &result{
-    ///     assert!(*val >= 0.);
-    ///     assert!(*val <= 1.);
-    /// }
+    /// let original_tensor = Tensor::rand(vec![2, 2]);
+    /// let new_tensor = Tensor::zeros_like(&original_tensor);
+    /// assert_eq!(new_tensor.shape(), &[2, 2]);
+    /// assert_eq!(new_tensor.to_cpu().as_contiguous_vec(), &[0., 0., 0., 0.]);
     ///
     /// ```
     pub fn zeros_like(other: &Self) -> Self {
         Self::zeros(Vec::from(other.shape().clone()))
     }
 
-    /// Same as [Tensor::zeros_like], but async.
+    /// Same as [`Tensor::zeros_like`], but async.
     pub async fn zeros_like_async(other: &Self) -> Self {
         Self::zeros_async(Vec::from(other.shape().clone())).await
     }
 
-    /// Clones self, turning a new [Tensor]
-    /// between 0 and 1.
+    /// Clones self, returning a new [`Tensor`]
+    /// with same shape, data and strides as last one.
     ///
     /// # Examples
     ///
     /// ```
     /// use gpu_compute::Tensor;
     /// let tensor = Tensor::rand(vec![2, 2]);
-    /// assert_eq!(tensor.shape(), &[2, 2]);
-    /// let result = tensor.to_cpu().as_contiguous_vec();
-    /// for val in &result{
-    ///     assert!(*val >= 0.);
-    ///     assert!(*val <= 1.);
-    /// }
+    /// let new_tensor = tensor.clone();
+    /// assert_eq!(tensor.shape(), new_tensor.shape());
+    /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), new_tensor.to_cpu().as_contiguous_vec());
     ///
     /// ```
     pub fn clone(&self) -> Self {
@@ -179,6 +172,7 @@ impl Tensor {
         }
     }
 
+    /// Same as [`Tensor::clone`], but async.
     pub async fn clone_async(&self) -> Self {
         Self {
             actual_tensor: self.actual_tensor.clone().await,
@@ -187,53 +181,169 @@ impl Tensor {
 
     /*******  Accessors  *******/
 
+    /// Returns the shape of the [`Tensor`]
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// assert_eq!(tensor.shape(), &[2, 2]);
+    ///
+    /// ```
     pub fn shape(&self) -> &VecDeque<usize> {
         self.actual_tensor.shape()
     }
 
+    /// Returns the strides of the [`Tensor`]
+    ///
+    /// The strides represent how many elements in the underlying memory one needs to "jump"
+    /// to get to the next element in the given dimension.
+    ///
+    /// If a Tensor has the following data `[1., 2., 3., 4.]`, shape `[2, 2]` and is contiguous,
+    /// it can be seen as a "vector of vectors": `[ [1., 2.] , [3., 4.] ]`.
+    ///
+    /// Each element can be uniquely identified by two indexes: `[x, y]`. For example, the number 3
+    /// has indexes: `[1, 0]`. The memory location of the element can be calculated as:
+    /// `(1 * 2 + 1 * 0) = 2`. `1 * 2` comes from the first dimension and `1 * 0` from the second one.
+    /// So the strides are `[2, 1]`, because for each increase in the first dimension we need to
+    /// jump 2 memory positions.
+    ///```text
+    /// Seeing the original data: [1., 2., 3., 4.], the number 2 is indeed in the memory index 2
+    ///         Memory Locations: |0 | 1 | 2 | 3|
+    /// ```
+    ///
+    /// # Examples
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// assert_eq!(tensor.strides(), &[2, 1]);
+    ///
+    /// ```
     pub fn strides(&self) -> &VecDeque<usize> {
         self.actual_tensor.strides()
     }
 
     /*******  Ops  *******/
-    pub async fn fill_with_async(&mut self, value: f32) {
-        self.actual_tensor.fill_with(value).await;
-    }
 
+    /// Fills `self` with the given value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let mut tensor = Tensor::rand(vec![2, 2]);
+    /// tensor.fill_with(5.);
+    /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), &[5., 5., 5., 5.]);
+    ///
+    /// ```
     pub fn fill_with(&mut self, value: f32) {
         block_on(self.actual_tensor.fill_with(value));
     }
 
+    /// Same as [Tensor::fill_with], but async.
+    pub async fn fill_with_async(&mut self, value: f32) {
+        self.actual_tensor.fill_with(value).await;
+    }
 
+    /// Same as [Tensor::matmul], but async.
     pub async fn matmul_async(&mut self, other: &Self) -> Self {
         Self {
             actual_tensor: self.actual_tensor.matmul(&other.actual_tensor).await,
         }
     }
 
+    /// Does a batch 2D matrix multiplication of `self` and the `other`. Inputs must be of rank
+    /// 2 or 3.
+    ///
+    /// The third dimension is broadcast between them (if it exists, othersize 1 is used and later
+    /// removed), so they must be broadcastable.
+    ///
+    /// The first two dimensions must be compatible with Matrix Multiplication, that is:
+    /// if `self` has dimensions `[1, 2, 3]`, other must have `[N, 3, M]`, where N and M are any number.
+    ///
+    /// # Examples
+    ///
+    /// Matmul with shapes `[2, 2, 2]` and `[2, 2]`. Broadcasting second [`Tensor`] to rank 3.
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
+    /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [2, 2, 2]
+    /// let result = ma.matmul(&mb);
+    /// assert_eq!(result.shape(), &[2, 2, 2]);
+    /// assert_eq!(result.to_cpu().as_contiguous_vec(), &[10., 13., 22., 29., 34., 45., 46., 61.]);
+    /// ```
+    ///
+    /// Matmul with shapes `[2, 2]` and `[2, 2]`. Broadcasting both to rank 3.
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
+    /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
+    /// let result = ma.matmul(&mb);
+    /// assert_eq!(result.shape(), &[2, 2]);
+    /// assert_eq!(result.to_cpu().as_contiguous_vec(), &[10., 13., 22., 29.]);
+    /// ```
     pub fn matmul(&self, other: &Self) -> Self {
         Self {
             actual_tensor: block_on(self.actual_tensor.matmul(&other.actual_tensor)),
         }
     }
 
+    /// Same as [Tensor::relu], but async.
     pub async fn relu_async(&self, leakage: f32) -> Self {
         Self {
             actual_tensor: self.actual_tensor.leaky_relu(leakage).await,
         }
     }
 
+    /// Applies the following operation to all elements of the [`Tensor`].
+    /// ```Rust
+    /// if (element >= 0){
+    ///     return element;
+    /// }else{
+    ///     return element*leakage;
+    /// }
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use gpu_compute::Tensor;
+    /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+    /// let relu_result = tensor.relu(0.1);
+    /// assert_eq!(relu_result.to_cpu().as_contiguous_vec(), &[1., 2., 3., -0.1, -0.5, 10.]);
+    /// ```
     pub fn relu(&self, leakage: f32) -> Self {
         Self {
             actual_tensor: block_on(self.actual_tensor.leaky_relu(leakage)),
         }
     }
 
-    pub async fn compare_async(&self, other: &Self) -> bool{
-        self.actual_tensor.view().eq(&other.actual_tensor.view()).await
+    /// Same as [Tensor::compare], but async.
+    pub async fn compare_async(&self, other: &Self) -> bool {
+        self.actual_tensor
+            .view()
+            .eq(&other.actual_tensor.view())
+            .await
     }
 
-    pub async fn compare(&self, other: &Self) -> bool{
+   /// Returns true if both [`Tensor`]s have the same shape and data.
+   ///
+   ///
+   /// # Examples
+   ///
+   /// ```
+   /// use gpu_compute::Tensor;
+   /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+   /// let mut tensor_diff_shape = Tensor::from_data_and_shape(vec![1., 2., 3., -1., -5., 10.], vec![2, 3]);
+   /// let mut tensor_diff_data = Tensor::from_data_1d(vec![9999., 2., 3., -1., -5., 10.]);
+   /// let mut tensor_same_shape_data = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+   /// assert!(tensor.compare(&tensor_same_shape_data));
+   /// assert!(!tensor.compare(&tensor_diff_data));
+   /// assert!(!tensor.compare(&tensor_diff_shape));
+   /// assert!(!tensor.compare(&tensor_diff_shape));
+   /// ```
+    pub fn compare(&self, other: &Self) -> bool {
         block_on(self.actual_tensor.view().eq(&other.actual_tensor.view()))
     }
 
@@ -245,7 +355,6 @@ impl Tensor {
     pub fn to_cpu(&self) -> CpuTensor {
         block_on(self.actual_tensor.to_cpu())
     }
-
 
     /*******  Indexing Ops  *******/
     pub fn slice<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {

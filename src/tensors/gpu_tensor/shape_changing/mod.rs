@@ -1,14 +1,17 @@
-use crate::{GpuTensor, GpuTensorView, ShapeStrides, GpuAllocated};
+use crate::{GpuAllocated, GpuTensor, GpuTensorView, ShapeStrides, MutShapeStrideTrait};
 mod broadcast_tests;
 mod slicing_tests;
-impl GpuTensor {
-    /// Increases Tensor rank artificially by appending adding one dimension to it
-    pub fn increase_rank(&self) -> GpuTensorView {
-        let mut new_dims = self.shape_strides.clone();
-        new_dims.increase_rank();
-        GpuTensorView::from_tensor(self, new_dims)
+
+impl MutShapeStrideTrait for GpuTensor{
+    fn increase_rank(&mut self) {
+        self.shape_strides.increase_rank();
     }
 
+    fn decrease_rank(&mut self) {
+        self.shape_strides.decrease_rank();
+    }
+}
+impl GpuTensor {
     pub fn view(&self) -> GpuTensorView {
         GpuTensorView::from_tensor(&self, self.dim_strides().clone())
     }
@@ -64,6 +67,8 @@ fn broadcast_shape_and_stride(
     let rank_diff = larger_rank.shape.len() - smaller_rank.shape.len();
     for _i in 0..rank_diff {
         smaller_rank.increase_rank();
+        // mark stride as 0 to make it explicit that this is from broadcasting
+        *smaller_rank.strides.front_mut().unwrap() = 0;
     }
     assert_eq!(smaller_rank.shape.len(), larger_rank.shape.len());
 
@@ -79,8 +84,6 @@ fn broadcast_shape_and_stride(
         if final_rank - id <= skipping_dims {
             continue;
         }
-        // id is used to modify the strides, but we need to take care of the skipped dims
-        // let id = id + skipping_dims;
         // IF they are equal -> do nothing
         if current_dim == target_dim {
             continue;

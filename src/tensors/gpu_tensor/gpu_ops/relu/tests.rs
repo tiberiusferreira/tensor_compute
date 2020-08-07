@@ -1,6 +1,5 @@
 use crate::prelude::*;
-use crate::{GpuTensor};
-
+use crate::GpuTensor;
 
 #[test]
 fn leaky_relu() {

@@ -1,11 +1,13 @@
 use crate::prelude::*;
-use crate::{GpuTensor};
-
+use crate::GpuTensor;
 
 #[test]
 fn simple_assign() {
     let async_block = async {
-        let mut ma = GpuTensor::from((0..8).into_iter().map(|e|e as f32).collect(), vec![2, 2, 2]);
+        let mut ma = GpuTensor::from(
+            (0..8).into_iter().map(|e| e as f32).collect(),
+            vec![2, 2, 2],
+        );
         ma.assign(s!(0; 1), 10.).await;
         assert_eq!(
             ma.to_cpu().await.raw_data_slice(),

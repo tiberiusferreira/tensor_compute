@@ -2,7 +2,7 @@ mod tests;
 
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, GpuTensorView, ShapeStrideTrait, GpuAllocated};
+use crate::{GpuAllocated, GpuTensor, GpuTensorView, ShapeStrideTrait};
 use std::collections::VecDeque;
 use zerocopy::{AsBytes, FromBytes};
 

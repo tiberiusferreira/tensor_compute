@@ -22,7 +22,6 @@ pub struct GpuTensor {
     shape_strides: ShapeStrides,
 }
 
-
 #[derive(Debug, Clone)]
 pub struct ShapeStrides {
     shape: VecDeque<usize>,
@@ -70,10 +69,20 @@ impl ShapeStrides {
         }
     }
 
-    /// Artificially increases the Tensor rank
+    /// Increases the Tensor rank
     pub fn increase_rank(&mut self) {
         self.shape.push_front(1);
-        self.strides.push_front(0);
+        self.strides = strides_from_deque_shape(&self.shape);
+    }
+
+    /// Decrease the Tensor rank
+    pub fn decrease_rank(&mut self) {
+        assert_eq!(
+            self.shape.pop_front().unwrap(),
+            1,
+            "Cant decrease rank of Tensor when its leading dimension is not unitary."
+        );
+        self.strides.pop_front();
     }
 
     pub fn rank(&self) -> usize {

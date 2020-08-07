@@ -13,7 +13,7 @@ mod compare;
 pub use compare::*;
 
 use crate::tensors::ShapeStrideTrait;
-use crate::{GpuTensor, GpuTensorView, GpuTensorViewMut, GpuAllocated};
+use crate::{GpuAllocated, GpuTensor, GpuTensorView, GpuTensorViewMut, MutShapeStrideTrait};
 pub use assign::*;
 pub use fill_with::*;
 pub use transpose::transpose;
@@ -51,16 +51,30 @@ impl GpuTensor {
 
     pub async fn matmul<'a>(&'a self, other: &'a Self) -> Self {
         let gpu = self.get_gpu();
+        assert!(
+            self.shape().len() >= 2 && other.shape().len() >= 2,
+            "Input to matmul must be of rank 2 or 3"
+        );
         // make sure tensors have rank 3 and same batch size, broadcasting if needed
         let (mut input_data_a_view, mut input_data_b_view) =
             self.broadcast(other, Some(2)).unwrap();
-        if input_data_a_view.rank() < 3 {
+        if input_data_a_view.rank() == 2 {
             input_data_a_view.increase_rank();
             input_data_b_view.increase_rank();
         }
         assert_eq!(input_data_a_view.shape().len(), 3);
         assert_eq!(input_data_b_view.shape().len(), 3);
-
-        super::gpu_ops::bmm_kernel(gpu, &input_data_a_view, &input_data_b_view).await
+        assert_eq!(
+            input_data_a_view.shape()[2],
+            input_data_b_view.shape()[1],
+            "Shapes do not match for matrix multiply: {:?} and {:?}",
+            input_data_a_view.shape(),
+            input_data_b_view.shape()
+        );
+        let mut res = super::gpu_ops::bmm_kernel(gpu, &input_data_a_view, &input_data_b_view).await;
+        if self.shape().len() == 2 && other.shape().len() == 2 {
+            res.decrease_rank();
+        }
+        res
     }
 }

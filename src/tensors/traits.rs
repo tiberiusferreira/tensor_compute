@@ -1,6 +1,7 @@
-use std::collections::VecDeque;
 pub use super::gpu_tensor::traits::*;
 use async_trait::async_trait;
+use std::collections::VecDeque;
+
 pub trait ShapeStrideTrait {
     fn shape(&self) -> &VecDeque<usize>;
     fn strides(&self) -> &VecDeque<usize>;
@@ -16,8 +17,15 @@ pub trait ShapeStrideTrait {
     }
 }
 
+pub trait MutShapeStrideTrait: ShapeStrideTrait{
+    /// Artificially increase the rank, setting the new dimension shape to 1
+    fn increase_rank(&mut self);
+    /// Decrease the rank if the leading shape dimension is 1, otherwise panics
+    fn decrease_rank(&mut self);
+}
+
 #[async_trait(?Send)]
-pub trait Constructable: Sized + ShapeStrideTrait{
+pub trait Constructable: Sized + ShapeStrideTrait {
     fn from_data(vec: Vec<f32>) -> Self;
 
     fn from_data_and_shape(vec: Vec<f32>, shape: Vec<usize>);

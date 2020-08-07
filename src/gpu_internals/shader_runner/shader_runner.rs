@@ -1,7 +1,7 @@
 use crate::gpu_internals::gpu_buffers::{GpuBuffer, GpuUniformBuffer};
 use crate::gpu_internals::GpuInstance;
-use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 use std::borrow::Cow::Borrowed;
+use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 
 pub enum BufferType<'a> {
     Storage(&'a GpuBuffer),
@@ -14,14 +14,14 @@ impl<'a> BufferType<'a> {
         match self {
             BufferType::Storage(a) => a.layout(id),
             BufferType::Uniform(a) => a.layout(id),
-            BufferType::UniformOwned(a) => {a.layout(id)}
+            BufferType::UniformOwned(a) => a.layout(id),
         }
     }
     pub fn to_bind_resource(&self) -> BindingResource {
         match self {
             BufferType::Storage(a) => a.to_bind_resource(),
             BufferType::Uniform(a) => a.to_bind_resource(),
-            BufferType::UniformOwned(a) => {a.to_bind_resource()}
+            BufferType::UniformOwned(a) => a.to_bind_resource(),
         }
     }
 }

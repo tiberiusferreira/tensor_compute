@@ -1,1 +1,1 @@
-pub use crate::{s, Tensor, tensors::traits::*, SliceRangeInfo};
+pub use crate::{s, tensors::traits::*, SliceRangeInfo, Tensor};

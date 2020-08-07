@@ -1,5 +1,5 @@
-use crate::ShapeStrides;
 use super::broadcast_shape_and_stride;
+use crate::ShapeStrides;
 #[test]
 pub fn simple_broadcast_works() {
     let a = ShapeStrides::from_shape_vec(vec![2, 2]); // -> [2, 2, 2]

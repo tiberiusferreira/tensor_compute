@@ -1,6 +1,6 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, ShapeStrideTrait, GpuAllocated};
+use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait};
 use zerocopy::{AsBytes, FromBytes};
 #[cfg(test)]
 mod tests;
