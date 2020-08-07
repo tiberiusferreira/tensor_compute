@@ -57,7 +57,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
     /// assert_eq!(tensor.shape(), &[4]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
@@ -75,7 +75,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
@@ -93,7 +93,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::zeros(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![0., 0., 0., 0.]);
@@ -116,7 +116,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// let result = tensor.to_cpu().as_contiguous_vec();
@@ -137,7 +137,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let original_tensor = Tensor::rand(vec![2, 2]);
     /// let new_tensor = Tensor::zeros_like(&original_tensor);
     /// assert_eq!(new_tensor.shape(), &[2, 2]);
@@ -159,7 +159,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::rand(vec![2, 2]);
     /// let new_tensor = tensor.clone();
     /// assert_eq!(tensor.shape(), new_tensor.shape());
@@ -186,7 +186,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     ///
@@ -215,7 +215,7 @@ impl Tensor {
     ///
     /// # Examples
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let tensor = Tensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.strides(), &[2, 1]);
     ///
@@ -231,7 +231,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let mut tensor = Tensor::rand(vec![2, 2]);
     /// tensor.fill_with(5.);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), &[5., 5., 5., 5.]);
@@ -266,7 +266,7 @@ impl Tensor {
     ///
     /// Matmul with shapes `[2, 2, 2]` and `[2, 2]`. Broadcasting second [`Tensor`] to rank 3.
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
     /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [2, 2, 2]
     /// let result = ma.matmul(&mb);
@@ -276,7 +276,7 @@ impl Tensor {
     ///
     /// Matmul with shapes `[2, 2]` and `[2, 2]`. Broadcasting both to rank 3.
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
     /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
     /// let result = ma.matmul(&mb);
@@ -308,7 +308,7 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use gpu_compute::Tensor;
+    /// use tensor_compute::Tensor;
     /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
     /// let relu_result = tensor.relu(0.1);
     /// assert_eq!(relu_result.to_cpu().as_contiguous_vec(), &[1., 2., 3., -0.1, -0.5, 10.]);
@@ -333,7 +333,7 @@ impl Tensor {
    /// # Examples
    ///
    /// ```
-   /// use gpu_compute::Tensor;
+   /// use tensor_compute::Tensor;
    /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
    /// let mut tensor_diff_shape = Tensor::from_data_and_shape(vec![1., 2., 3., -1., -5., 10.], vec![2, 3]);
    /// let mut tensor_diff_data = Tensor::from_data_1d(vec![9999., 2., 3., -1., -5., 10.]);

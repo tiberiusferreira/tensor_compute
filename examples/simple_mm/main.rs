@@ -1,4 +1,4 @@
-use gpu_compute::{GpuStore, Tensor};
+use tensor_compute::{GpuStore, Tensor};
 
 fn main() {
     println!("Running in {:?}", GpuStore::get_default().info());

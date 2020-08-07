@@ -1,4 +1,4 @@
-use gpu_compute::{CpuTransferable, GpuTensor};
+use tensor_compute::{CpuTransferable, GpuTensor};
 
 fn main() {
     let mut handles = vec![];

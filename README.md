@@ -7,7 +7,7 @@ on Machine Learning application.
 Working Example:  
   
 ```Rust  
-use gpu_compute::{CpuTensor2D, GpuBox};  
+use tensor_compute::{CpuTensor2D, GpuBox};  
   
   
 fn main() {  

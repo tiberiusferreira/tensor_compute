@@ -668,23 +668,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpu_compute"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "blocking",
- "bytemuck",
- "env_logger",
- "futures",
- "log",
- "once_cell",
- "rand",
- "wgpu",
- "winit",
- "zerocopy",
-]
-
-[[package]]
 name = "hermit-abi"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1381,6 +1364,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "tensor_compute"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "blocking",
+ "bytemuck",
+ "env_logger",
+ "futures",
+ "log",
+ "once_cell",
+ "rand",
+ "wgpu",
+ "winit",
+ "zerocopy",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1632,7 +1632,7 @@ dependencies = [
 [[package]]
 name = "wgpu"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu-rs.git#7087e3141c2982361fb6e8b171475485bad5a1a8"
+source = "git+https://github.com/gfx-rs/wgpu-rs.git?rev=3069da10043c46a2b184fb57ad3760a5799d3f9b#3069da10043c46a2b184fb57ad3760a5799d3f9b"
 dependencies = [
  "arrayvec",
  "futures",
@@ -1654,7 +1654,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu?rev=78546f410da6c3d48152c8b7d2cf3799babf956b#78546f410da6c3d48152c8b7d2cf3799babf956b"
+source = "git+https://github.com/gfx-rs/wgpu?rev=8057acf120f9944056a6b5de6cf326f18ae7671d#8057acf120f9944056a6b5de6cf326f18ae7671d"
 dependencies = [
  "arrayvec",
  "bitflags",
@@ -1680,7 +1680,7 @@ dependencies = [
 [[package]]
 name = "wgpu-types"
 version = "0.5.0"
-source = "git+https://github.com/gfx-rs/wgpu?rev=78546f410da6c3d48152c8b7d2cf3799babf956b#78546f410da6c3d48152c8b7d2cf3799babf956b"
+source = "git+https://github.com/gfx-rs/wgpu?rev=8057acf120f9944056a6b5de6cf326f18ae7671d#8057acf120f9944056a6b5de6cf326f18ae7671d"
 dependencies = [
  "bitflags",
 ]
