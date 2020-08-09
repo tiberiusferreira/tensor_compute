@@ -484,7 +484,9 @@ impl Tensor {
 
     /// Same as [Tensor::transpose], but async.
     pub async fn transpose_async(&self) -> Tensor {
-        self.transpose().await
+        Tensor{
+            actual_tensor:self.actual_tensor.transpose().await
+        }
     }
 
 
@@ -518,9 +520,7 @@ impl Tensor {
     /// );
     /// ```
     pub fn transpose(&self) -> Tensor {
-        Tensor{
-            actual_tensor: block_on(self.actual_tensor.transpose())
-        }
+        block_on(self.transpose_async())
     }
 
     pub fn reshape(&mut self, new_shape: Vec<usize>) {
