@@ -490,7 +490,9 @@ impl Tensor {
     }
 
 
-    /// Transposes a [`Tensor`] swapping its last two dimensions.
+    /// Transposes a [`Tensor`] swapping its last two dimensions. For now, this copies the tensor
+    /// to a new one to avoid creating a non-contiguous Tensor and all the implications that come from
+    /// it.
     ///
     /// # Examples
     ///
@@ -523,6 +525,30 @@ impl Tensor {
         block_on(self.transpose_async())
     }
 
+    /// Reshapes a [`Tensor`] to the given shape. The only restriction is having the same number
+    /// of elements as the original shape.
+    ///
+    /// This does not change the underlying data in any way. It just changes how it is "sliced"
+    /// into each dimension.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{Tensor, s};
+    /// let mut tensor = Tensor::from_data_and_shape(
+    ///     vec![1., 2., 3., 4., 5., 6., 7., 8.],
+    ///     vec![2, 4],
+    /// );
+    /// tensor.reshape(vec![4, 2]);
+    /// assert_eq!(
+    ///     tensor.shape(),
+    ///     &[4, 2]
+    /// );
+    /// assert_eq!(
+    ///     tensor.to_cpu().as_contiguous_vec(),
+    ///     &[1., 2., 3., 4., 5., 6., 7., 8.]
+    /// );
+    /// ```
     pub fn reshape(&mut self, new_shape: Vec<usize>) {
         self.actual_tensor.reshape(new_shape);
     }
