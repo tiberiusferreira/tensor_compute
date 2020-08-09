@@ -42,5 +42,6 @@ fn main() {
 
 ## Short-term goals
 
+- How should indexing and assignment work?
 - Finish public API docs
 - More Tests
