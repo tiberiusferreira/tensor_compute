@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::prelude::CpuTransferable;
 use crate::GpuTensor;
 
 #[test]

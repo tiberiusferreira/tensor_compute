@@ -1,7 +1,7 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
 pub use crate::GpuAllocated;
-use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides};
+use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides, MutShapeStrideTrait};
 use async_trait::async_trait;
 use std::collections::VecDeque;
 /// Same as GpuTensorView but mutable
@@ -20,16 +20,6 @@ impl<'a> GpuAllocated for GpuTensorViewMut<'a> {
         &self.original_tensor.internal_gpu_buffer()
     }
 
-    // async fn to_cpu(&self) -> CpuTensor {
-    //     let gpu = self.get_gpu();
-    //     let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.internal_gpu_buffer()).await;
-    //     CpuTensor::new_with_strides_and_offset(
-    //         buffer_in_cpu_mem,
-    //         self.shape().clone(),
-    //         self.strides().clone(),
-    //         self.shape_strides.offset,
-    //     )
-    // }
 }
 
 impl<'a> ShapeStrideTrait for GpuTensorViewMut<'a> {
@@ -54,7 +44,14 @@ impl<'a> GpuTensorViewMut<'a> {
         }
     }
 
-    pub fn increase_rank(&mut self) {
+}
+
+impl <'a> MutShapeStrideTrait for GpuTensorViewMut<'a>{
+    fn increase_rank(&mut self) {
         self.shape_strides.increase_rank();
+    }
+
+    fn decrease_rank(&mut self) {
+        self.shape_strides.decrease_rank();
     }
 }
