@@ -59,13 +59,13 @@ impl GpuTensor {
     }
 
     pub fn from_data_with_gpu(gpu: &GpuInstance, data: Vec<f32>, shape: Vec<usize>) -> Self {
-        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+        let shape = &VecDeque::from(shape);
+        let calc_size = GpuTensor::numel_from_shape(&shape);
         assert_eq!(
             calc_size,
             data.len(),
             "Shape is not valid for the size of the data!"
         );
-        let shape = VecDeque::from(shape);
         let strides = strides_from_deque_shape(&shape);
         GpuTensor::from_buffer_with_strides_and_offset(
             gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&data)),

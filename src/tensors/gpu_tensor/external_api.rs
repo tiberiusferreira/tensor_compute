@@ -1,4 +1,4 @@
-use crate::{GpuTensor, ShapeStrideTrait};
+use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides};
 use std::collections::VecDeque;
 
 impl GpuTensor {
@@ -30,12 +30,13 @@ impl GpuTensor {
                 panic!("Cant reshape tensor with stride 0");
             }
         }
-        let calc_size = shape.iter().fold(0, |acc: usize, &x| acc + x);
+        let shape = VecDeque::from(shape);
+        let numel = GpuTensor::numel_from_shape(&shape);
         assert_eq!(
-            calc_size,
+            numel,
             self.numel(),
             "Shape is not valid for the size of the data!"
         );
-        self.shape_strides.shape = VecDeque::from(shape);
+        self.shape_strides = ShapeStrides::from_shape(shape);
     }
 }

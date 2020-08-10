@@ -79,13 +79,13 @@ impl ShapeStrideTrait for CpuTensor {
 
 impl CpuTensor {
     pub fn from_data_and_shape(data: Vec<f32>, shape: Vec<usize>) -> Self {
-        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+        let shape = VecDeque::from(shape);
+        let numel = GpuTensor::numel_from_shape(&shape);
         assert_eq!(
-            calc_size,
+            numel,
             data.len(),
             "Shape is not valid for the size of the data!"
         );
-        let shape = VecDeque::from(shape);
         let strides = strides_from_deque_shape(&shape);
         Self {
             data,
@@ -97,13 +97,13 @@ impl CpuTensor {
 
     pub fn rand(shape: Vec<usize>) -> Self {
         use rand::Rng;
-        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
+        let shape = VecDeque::from(shape);
+        let numel = GpuTensor::numel_from_shape(&shape);
         let mut rng = rand::thread_rng();
-        let mut data = Vec::with_capacity(calc_size);
-        for _i in 0..calc_size {
+        let mut data = Vec::with_capacity(numel);
+        for _i in 0..numel {
             data.push(rng.gen());
         }
-        let shape = VecDeque::from(shape);
         let strides = strides_from_deque_shape(&shape);
         Self {
             data,
@@ -119,8 +119,8 @@ impl CpuTensor {
         strides: VecDeque<usize>,
         offset: usize,
     ) -> Self {
-        let calc_size = shape.iter().rev().fold(1, |acc: usize, &x| acc * x);
-        assert!(calc_size <= data.len(), "Data is too small for given shape");
+        let numel = GpuTensor::numel_from_shape(&shape);
+        assert!(numel <= data.len(), "Data is too small for given shape");
         Self {
             data,
             shape,

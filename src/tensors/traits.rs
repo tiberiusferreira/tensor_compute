@@ -13,6 +13,9 @@ pub trait ShapeStrideTrait {
         Self::numel_from_shape(self.shape())
     }
     fn numel_from_shape(shape: &VecDeque<usize>) -> usize {
+        if shape.len() == 0{
+            return 0;
+        }
         shape.iter().rev().fold(1, |acc: usize, &x| acc * x)
     }
 }
