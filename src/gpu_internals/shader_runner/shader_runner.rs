@@ -85,7 +85,7 @@ impl GpuInstance {
         let compute_pipeline =
             self.device()
                 .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
-                    layout: &pipeline_layout,
+                    layout: Some(&pipeline_layout),
                     compute_stage: wgpu::ProgrammableStageDescriptor {
                         module: &shader,
                         entry_point: Borrowed("main"),
