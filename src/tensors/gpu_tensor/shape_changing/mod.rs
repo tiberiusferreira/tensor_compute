@@ -1,6 +1,7 @@
-use crate::{GpuAllocated, GpuTensor, GpuTensorView, ShapeStrides, MutShapeStrideTrait};
+use crate::{GpuTensor, GpuTensorView, ShapeStrides, MutShapeStrideTrait, ShapeStrideTrait};
 mod broadcast_tests;
 mod slicing_tests;
+
 
 impl MutShapeStrideTrait for GpuTensor{
     fn increase_rank(&mut self) {
@@ -15,6 +16,23 @@ impl GpuTensor {
     pub fn view(&self) -> GpuTensorView {
         GpuTensorView::from_tensor(&self, self.dim_strides().clone())
     }
+
+    pub fn reshape(&mut self, shape: Vec<usize>) {
+        for stride in self.strides() {
+            if *stride == 0 {
+                panic!("Cant reshape tensor with stride 0");
+            }
+        }
+        let shape = std::collections::VecDeque::from(shape);
+        let numel = GpuTensor::numel_from_shape(&shape);
+        assert_eq!(
+            numel,
+            self.numel(),
+            "Shape is not valid for the size of the data!"
+        );
+        self.shape_strides = ShapeStrides::from_shape(shape);
+    }
+
 
     /// Tensor are broadcastable if:
     /// - Each tensor has at least one dimension.
@@ -40,10 +58,7 @@ impl GpuTensor {
         ))
     }
 
-    pub async fn transpose(&self) -> GpuTensor {
-        use crate::tensors::gpu_tensor::gpu_ops::transpose;
-        transpose(self.get_gpu(), &self).await
-    }
+
 }
 
 fn broadcast_shape_and_stride(

@@ -26,6 +26,7 @@ impl <'a> MutShapeStrideTrait for GpuTensorView<'a>{
 impl<'a> GpuTensorView<'a> {
 
     pub fn from_tensor(gpu_tensor: &'a GpuTensor, dim_strides: ShapeStrides) -> Self {
+        assert!(!gpu_tensor.is_empty(), "cant create a view from an empty Tensor");
         Self {
             original_tensor: &gpu_tensor,
             shape_strides: dim_strides,
@@ -37,6 +38,7 @@ impl<'a> GpuTensorView<'a> {
     }
 
     pub fn slice<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {
+        assert!(!bounds.is_empty(), "Empty bounds for slicing");
         let bounds: Vec<SliceRangeInfo> = bounds.into_iter().map(|e| e.into()).collect();
         let new_shape_strides = shape_strides_for_slice_range(&self.shape_strides, bounds);
         GpuTensorView::from_tensor(self.original_tensor, new_shape_strides)

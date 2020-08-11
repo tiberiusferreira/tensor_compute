@@ -128,12 +128,20 @@ impl Clone for Tensor {
 impl Tensor {
     /*******  Constructors  *******/
 
-
-    // pub fn empty() -> Self {
-    //     Tensor {
-    //         actual_tensor: GpuTensor::from_data_1d()
-    //     }
-    // }
+    /// Returns an empty 0 dimensional [`Tensor`]. Could be useful as a placeholder.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::Tensor;
+    /// let tensor = Tensor::empty();
+    /// assert_eq!(tensor.shape(), &[]);
+    /// ```
+    pub fn empty() -> Self {
+        Tensor {
+            actual_tensor: GpuTensor::from(vec![], vec![])
+        }
+    }
 
     /// Returns a 1 dimensional [`Tensor`] with the given data.
     ///

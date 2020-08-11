@@ -1,6 +1,10 @@
 use std::collections::VecDeque;
 
 pub fn strides_from_deque_shape(shape: &VecDeque<usize>) -> VecDeque<usize> {
+    // If shape is empty, so should be the strides
+    if shape.is_empty(){
+        return VecDeque::new();
+    }
     let mut strides = VecDeque::new();
     strides.push_back(1);
     for dim in shape.iter().skip(1).rev() {
@@ -12,6 +16,10 @@ pub fn strides_from_deque_shape(shape: &VecDeque<usize>) -> VecDeque<usize> {
 
 #[test]
 pub fn can_calc_strides_from_shape() {
+    assert_eq!(
+        strides_from_deque_shape(&VecDeque::new()),
+        []
+    );
     assert_eq!(
         strides_from_deque_shape(&VecDeque::from(vec![2, 2])),
         [2, 1]

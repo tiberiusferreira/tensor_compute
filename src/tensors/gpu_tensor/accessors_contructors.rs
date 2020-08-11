@@ -101,6 +101,7 @@ impl GpuTensor {
 
     pub fn from_data_1d(data: Vec<f32>) -> Self {
         let len = data.len();
+        assert!(len >= 1, "Can't create 1D Tensor with empty data!");
         let gpu = GpuStore::get_default();
         Self::from_data_with_gpu(gpu, data, vec![len])
     }
@@ -116,6 +117,10 @@ impl GpuTensor {
 
     pub fn is_scalar(&self) -> bool {
         self.shape_strides.is_scalar()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.shape_strides.shape.len() == 0
     }
 
     pub fn slice<T: Into<SliceRangeInfo>>(&self, bounds: Vec<T>) -> GpuTensorView {

@@ -1,8 +1,6 @@
 mod accessors_contructors;
-mod external_api;
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;
-pub use external_api::*;
 pub use indexing::SliceRangeInfo;
 use std::collections::VecDeque;
 mod tensor_view;
