@@ -4,7 +4,7 @@
 This is a personal project to teach myself WebGPU computing, focused   
 on Machine Learning application.  
 
-Features for now:
+## Features for now:
 
 - [X] Select which GPU to use (if more than 1 in system)
 - [X] Clone
@@ -14,10 +14,23 @@ Features for now:
 - [X] Fill
 - [X] Compare
 - [X] Make Contiguous
-- [X] Slice
-- [X] Index
+- [-] Slice (Needs more design/work)
+- [-] Index (Needs more design/work)
 - [X] Create Views Tensor
 
+## In progress:
+
+Element Wise Tensor - Tensor Ops:
+
+- [ ] Add
+- [ ] Sub
+- [ ] Mul
+
+Scalar - Tensor Ops:
+
+- [ ] Add
+- [ ] Sub
+- [ ] Mul
 
 Working Example:  
   
