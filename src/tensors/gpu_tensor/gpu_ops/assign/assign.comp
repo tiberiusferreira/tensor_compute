@@ -9,7 +9,7 @@ readonly layout(set = 0, binding = 5) uniform Assign_data {
 };
 
 void main() {
-    uint element_number = gl_GlobalInvocationID.x; // 0 1 2 3
+    uint element_number = gl_GlobalInvocationID.x;
     uint linear_offset = get_linear_offset_a(element_number);
     ten_a[linear_offset] = assign_data;
 }

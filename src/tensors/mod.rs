@@ -114,6 +114,119 @@ impl<'a> TensorView<'a> {
     }
 
 
+    /// Adds both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{Tensor, CpuTransferable};
+    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
+    /// let result = tensor_left.view().add(&tensor_right.view());
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[3., 5., 7., 9.]
+    /// );
+    /// ```
+    pub fn add(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: block_on(self.actual_tensor.add(&other.actual_tensor))
+        }
+    }
+
+    /// Same as [`TensorView::add`] but async
+    pub async fn add_async(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: self.actual_tensor.add(&other.actual_tensor).await
+        }
+    }
+
+
+    /// Subtracts both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{Tensor, CpuTransferable};
+    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
+    /// let result = tensor_left.view().sub(&tensor_right.view());
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[-1., -1., -1., -1.]
+    /// );
+    /// ```
+    pub fn sub(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: block_on(self.actual_tensor.sub(&other.actual_tensor))
+        }
+    }
+
+    /// Same as [`TensorView::sub`] but async
+    pub async fn sub_async(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: self.actual_tensor.sub(&other.actual_tensor).await
+        }
+    }
+
+
+    /// Multiplies element wise both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{Tensor, CpuTransferable};
+    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
+    /// let result = tensor_left.view().dot_mul(&tensor_right.view());
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[2., 6., 12., 20.]
+    /// );
+    /// ```
+    pub fn dot_mul(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: block_on(self.actual_tensor.dot_mul(&other.actual_tensor))
+        }
+    }
+
+    /// Same as [`TensorView::dot_mul`] but async
+    pub async fn dot_mul_async(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: self.actual_tensor.dot_mul(&other.actual_tensor).await
+        }
+    }
+
+    /// Divides element wise both [`TensorView`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{Tensor, CpuTransferable};
+    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 10., 4.]);
+    /// let tensor_right = Tensor::from_data_1d(vec![2., 8., 2., 1.]);
+    /// let result = tensor_left.view().dot_div(&tensor_right.view());
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[0.5, 0.25, 5., 4.]
+    /// );
+    /// ```
+    pub fn dot_div(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: block_on(self.actual_tensor.dot_div(&other.actual_tensor))
+        }
+    }
+
+    /// Same as [`TensorView::dot_div`] but async
+    pub async fn dot_div_async(&self, other: &Self) -> Tensor {
+        Tensor{
+            actual_tensor: self.actual_tensor.dot_div(&other.actual_tensor).await
+        }
+    }
 }
 
 /// Clones the Tensor data, shape, strides
@@ -475,7 +588,7 @@ impl Tensor {
     /// assert_eq!(tensor_slice.shape(), &[1, 2, 1]);
     /// assert_eq!(tensor_slice.to_cpu().as_contiguous_vec(), &[2., 4.]);
     /// ```
-    pub fn slice<'a, T: Into<SliceRangeInfo>>(&'a self, indices: Vec<T>) -> TensorView<'a> {
+    pub fn slice<T: Into<SliceRangeInfo>>(&self, indices: Vec<T>) -> TensorView {
         TensorView {
             actual_tensor: self.actual_tensor.slice(indices),
         }
@@ -567,4 +680,12 @@ impl Tensor {
     pub fn reshape(&mut self, new_shape: Vec<usize>) {
         self.actual_tensor.reshape(new_shape);
     }
+
+    pub fn view(&self) -> TensorView{
+        TensorView{
+            actual_tensor: self.actual_tensor.view()
+        }
+    }
+
+
 }

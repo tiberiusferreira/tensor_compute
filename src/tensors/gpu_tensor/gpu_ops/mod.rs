@@ -18,6 +18,18 @@ impl<'a> GpuTensorView<'a> {
     pub async fn eq(&self, other: &Self) -> bool {
         compare::eq(self.get_gpu(), self, other).await
     }
+    pub async fn add(&self, other: &Self) -> GpuTensor {
+        tensor_tensor_ops::add(self.get_gpu(), self, other).await
+    }
+    pub async fn sub(&self, other: &Self) -> GpuTensor {
+        tensor_tensor_ops::sub(self.get_gpu(), self, other).await
+    }
+    pub async fn dot_mul(&self, other: &Self) -> GpuTensor {
+        tensor_tensor_ops::dot_mul(self.get_gpu(), self, other).await
+    }
+    pub async fn dot_div(&self, other: &Self) -> GpuTensor {
+        tensor_tensor_ops::dot_div(self.get_gpu(), self, other).await
+    }
 }
 
 impl<'a> GpuTensorViewMut<'a> {

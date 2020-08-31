@@ -11,7 +11,7 @@ layout(set = 0, binding = 1) buffer OutputBuffer {
 
 
 void main() {
-    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    uint index = gl_GlobalInvocationID.x;
     output_buffer[index] = input_data[index];
 }
 

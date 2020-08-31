@@ -5,9 +5,9 @@ use crate::{GpuTensor, GpuTensorView, ShapeStrideTrait, AsShaderInput};
 #[cfg(test)]
 mod tests;
 
-pub async fn add<'a>(gpu: &GpuInstance, left_tensor: &GpuTensorView<'a>, right_tensor: &GpuTensorView<'a>) -> GpuTensor {
-    assert_eq!(left_tensor.shape(), right_tensor.shape(), "Can't add tensors with incompatible shapes");
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("add.spv"));
+pub async fn dot_mul<'a>(gpu: &GpuInstance, left_tensor: &GpuTensorView<'a>, right_tensor: &GpuTensorView<'a>) -> GpuTensor {
+    assert_eq!(left_tensor.shape(), right_tensor.shape(), "Can't dot_mul tensors with incompatible shapes");
+    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("dot_mul.spv"));
 
     let mut shader_inputs = left_tensor.to_shader_inputs(0);
     shader_inputs.extend(right_tensor.to_shader_inputs(shader_inputs.len()));

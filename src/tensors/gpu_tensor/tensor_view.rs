@@ -4,7 +4,7 @@ use crate::tensors::gpu_tensor::indexing::shape_strides_for_slice_range;
 use crate::{AsShaderInput, GpuAllocated, GpuTensor, ShapeStrideTrait, ShapeStrides, SliceRangeInfo, MutShapeStrideTrait};
 use std::collections::VecDeque;
 
-/// A GpuTensorView share the same data as the original Tensor,
+/// A GpuTensorView shares the same data as the original Tensor,
 /// but can have different shapes and strides
 /// For example, the original shape could be [2, 2] and the GpuTensorView could be [1, 2, 2]
 pub struct GpuTensorView<'a> {

@@ -14,7 +14,7 @@ void main() {
     uint element_number = gl_GlobalInvocationID.x;
     uint offset_a = get_linear_offset_a(element_number);
     uint offset_b = get_linear_offset_b(element_number);
-    out_buffer[element_number] = ten_a[offset_a] + ten_b[offset_b];
+    out_buffer[element_number] = ten_a[offset_a] - ten_b[offset_b];
 }
 
 
