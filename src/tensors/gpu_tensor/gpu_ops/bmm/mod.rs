@@ -1,3 +1,4 @@
+#[cfg(test)]
 mod tests;
 
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
@@ -29,7 +30,8 @@ pub async fn bmm_kernel<'a>(
     input_data_a_view: &GpuTensorView<'a>,
     input_data_b_view: &GpuTensorView<'a>,
 ) -> GpuTensor {
-    // let (input_data_a_view, input_data_b_view) = (input_data_a.view(), input_data_b.view());
+    assert!(input_data_a_view.is_contiguous(), "Can't Batch Matrix Multiply non contiguous Tensors yet");
+    assert!(input_data_b_view.is_contiguous(), "Can't Batch Matrix Multiply non contiguous Tensors yet");
     assert_eq!(input_data_a_view.shape().len(), 3);
     assert_eq!(input_data_b_view.shape().len(), 3);
     assert_eq!(input_data_a_view.shape()[0], input_data_b_view.shape()[0]);

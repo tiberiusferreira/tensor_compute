@@ -23,7 +23,7 @@ pub async fn eq<'a>(
     shader_inputs.extend(right_inputs);
     let output = gpu.new_gpu_buffer_from_data(0f32.as_bytes());
     shader_inputs.push(ShaderInput {
-        binding_id: 10,
+        binding_id: shader_inputs.len(),
         gpu_buffer: BufferType::Storage(&output),
     });
     gpu.run_shader(

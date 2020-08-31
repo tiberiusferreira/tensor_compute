@@ -1,0 +1,18 @@
+#version 450
+layout(local_size_x = 1) in;
+
+layout(set = 0, binding = 0) buffer FillVal {
+    float fill_value;
+};
+
+layout(set = 0, binding = 1) buffer Out {
+    float[] out_buffer;
+};
+
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    out_buffer[index] = fill_value;
+}
+
+

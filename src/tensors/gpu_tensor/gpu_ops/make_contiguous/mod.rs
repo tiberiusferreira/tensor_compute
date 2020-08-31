@@ -1,7 +1,6 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderInput, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuAllocated, GpuTensor, GpuTensorView, ShapeStrideTrait, ShapeStrides};
-use zerocopy::AsBytes;
+use crate::{GpuTensor, GpuTensorView, ShapeStrideTrait, ShapeStrides, AsShaderInput};
 
 #[cfg(test)]
 mod tests;
@@ -10,44 +9,15 @@ pub async fn make_contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) ->
     let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("make_contiguous.spv"));
 
     let nb_output_numbers = data.numel();
-
-    let shape_u32: Vec<u32> = data.shape().iter().map(|s| *s as u32).collect();
-    let strides_u32: Vec<u32> = data.strides().iter().map(|s| *s as u32).collect();
-
-    let shapes = gpu.new_uniform_buffer(shape_u32.as_slice().as_bytes());
-    let strides = gpu.new_uniform_buffer(strides_u32.as_slice().as_bytes());
-    let shapes_strides_len = gpu.new_uniform_buffer(data.shape().len().as_bytes());
-    let offset = gpu.new_uniform_buffer(data.shape_strides.offset.as_bytes());
-
+    let mut shader_inputs = data.to_shader_inputs(0);
     let output = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+    shader_inputs.push(ShaderInput{
+        binding_id: shader_inputs.len(),
+        gpu_buffer: BufferType::Storage(&output)
+    });
     gpu.run_shader(
         &cs_module,
-        vec![
-            ShaderInput {
-                binding_id: 0,
-                gpu_buffer: BufferType::Storage(data.internal_gpu_buffer()),
-            },
-            ShaderInput {
-                binding_id: 1,
-                gpu_buffer: BufferType::Uniform(&shapes),
-            },
-            ShaderInput {
-                binding_id: 2,
-                gpu_buffer: BufferType::Uniform(&strides),
-            },
-            ShaderInput {
-                binding_id: 3,
-                gpu_buffer: BufferType::Uniform(&shapes_strides_len),
-            },
-            ShaderInput {
-                binding_id: 4,
-                gpu_buffer: BufferType::Uniform(&offset),
-            },
-            ShaderInput {
-                binding_id: 5,
-                gpu_buffer: BufferType::Storage(&output),
-            },
-        ],
+        shader_inputs,
         ThreadGroup {
             x: nb_output_numbers,
             y: 1,

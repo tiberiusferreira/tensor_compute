@@ -1,5 +1,8 @@
 use crate::tensors::gpu_tensor::indexing::SliceRangeInfo;
-use crate::{s, ShapeStrides};
+use crate::{ShapeStrides};
+
+#[cfg(test)]
+use crate::{s};
 
 pub fn shape_strides_for_slice_range<T: Into<SliceRangeInfo>>(
     original: &ShapeStrides,

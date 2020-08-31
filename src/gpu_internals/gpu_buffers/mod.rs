@@ -24,28 +24,30 @@ pub struct GpuUniformBuffer {
 
 impl GpuUniformBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
-        wgpu::BindGroupLayoutEntry::new(
-            binding as u32,
-            wgpu::ShaderStage::COMPUTE,
-            wgpu::BindingType::UniformBuffer {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding as u32,
+            visibility: wgpu::ShaderStage::COMPUTE,
+            ty: wgpu::BindingType::UniformBuffer {
                 dynamic: false,
                 min_binding_size: wgpu::BufferSize::new(4),
             },
-        )
+            count: None
+        }
     }
 }
 
 impl GpuBuffer {
     pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
-        wgpu::BindGroupLayoutEntry::new(
-            binding as u32,
-            wgpu::ShaderStage::COMPUTE,
-            wgpu::BindingType::StorageBuffer {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding as u32,
+            visibility: wgpu::ShaderStage::COMPUTE,
+            ty: wgpu::BindingType::StorageBuffer {
                 dynamic: false,
-                min_binding_size: wgpu::BufferSize::new(4),
                 readonly: false,
+                min_binding_size: wgpu::BufferSize::new(4),
             },
-        )
+            count: None
+        }
     }
 }
 
@@ -129,7 +131,7 @@ impl GpuInstance {
 
     /// Creates an empty GPU buffer which can be copied to another buffer.
     /// One used case if to accumulate results of a computation in it and copy them to an
-    /// output staging buffer
+    /// output staging buffer. Also used to store shader computation results.
     pub fn new_empty_gpu_buffer(&self, size_bytes: usize) -> GpuBuffer {
         let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,

@@ -1,6 +1,7 @@
 pub use super::gpu_tensor::traits::*;
 use async_trait::async_trait;
 use std::collections::VecDeque;
+use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;
 
 pub trait ShapeStrideTrait {
     fn shape(&self) -> &VecDeque<usize>;
@@ -17,6 +18,19 @@ pub trait ShapeStrideTrait {
             return 0;
         }
         shape.iter().rev().fold(1, |acc: usize, &x| acc * x)
+    }
+
+    /// In order to be contiguous, each one of the strides need to be either 0 (fake dimension)
+    /// or equal to the stride a contiguous tensor of the same shape would have
+    fn is_contiguous(&self) -> bool{
+        let curr_strides = self.strides();
+        let contiguous_strides = strides_from_deque_shape(self.shape());
+        for (curr_stride, contiguous_stride) in curr_strides.iter().zip(contiguous_strides.iter()){
+            if *curr_stride != 0 && curr_stride != contiguous_stride{
+                return false;
+            }
+        }
+        return true;
     }
 }
 

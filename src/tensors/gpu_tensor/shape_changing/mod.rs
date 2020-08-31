@@ -1,5 +1,7 @@
 use crate::{GpuTensor, GpuTensorView, ShapeStrides, MutShapeStrideTrait, ShapeStrideTrait};
+#[cfg(test)]
 mod broadcast_tests;
+#[cfg(test)]
 mod slicing_tests;
 
 

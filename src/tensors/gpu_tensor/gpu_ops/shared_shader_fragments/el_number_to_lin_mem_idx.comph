@@ -1,0 +1,49 @@
+// How many elements there are "under" the shape dimension of index shape_idx.
+// In other words, how many elements would we "skip" by increasing this dimension by 1.
+// For example: shape = [2, 3]. Dimension of value 3, shape_idx=0, 1 element under it.
+// Dimension of value 2, shape_idx=1, 3 element under it.
+uint elements_under_dimension(uint shape_idx, uint[20] shape, uint stride_shape_len){
+    // find out where we are in each shape dimension and then multiply it by the stride
+    // calculate how many elements each shape dimension contains
+    uint acc = 1;
+    for (uint i = stride_shape_len-1; i >= shape_idx+1; i--){
+        acc = acc*shape[i]; // Example Shape: [2  3 4]
+        // for idx = 0 => 1*4*3
+    }
+    return acc;
+}
+
+// We need to find the index of the element of number `element_number`
+// in the underlying linear memory. Remember that we could be working with
+// a Tensor slice such as [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] with offset 2, so:
+// [3, 4, 5, 6, 7, 8, 9, 10] shape [2, 2] and stride [6, 1]
+// so: (element 0) [0, 0] = 3; (element 1) [0, 1] = 4; (element 2) [1, 0] = 9;
+// (element 3) [1, 1] = 10
+// So, we actually need to calculate the offset using the shape, stride and
+// offset info. This function does that.
+uint index_in_linear_memory_for_element_number(uint element_number, uint[20] shape, uint[20] strides, uint stride_shape_len, uint offset){
+    // for each shape dimension (if shape = [2, 3] the shape dimensions are 2 and 3), from "right" to "left"
+    // find out which indices would element_number have.
+    // For example: shape = [2, 3] and element_number = 4: Element 0 = [0, 0]; Element 1 = [0, 1]; Element 2 = [0, 2]
+    // Element 3 = [1, 0];  Element 4 = [1, 1]. So element_number 4 has indices [1, 1] in shape.
+    // After that we need to multiply each index by corresponding stride.
+    uint remainer = element_number;
+//    uint offset = offset;
+
+    for (uint shape_idx = 0; shape_idx < stride_shape_len; shape_idx++){
+        // find out the how many of `remainer` we can fit in this dimension
+        uint nb_elements = elements_under_dimension(shape_idx, shape, stride_shape_len);
+        uint dim_index = remainer / nb_elements;
+        // how many are left for the next dimensions
+        remainer = remainer % nb_elements;
+        // multiply it by the strides of this dimension
+        offset += dim_index * strides[shape_idx];
+    }
+    // do we need this? by now remainer should be 0
+    offset += remainer;
+    return offset;
+}
+
+
+
+

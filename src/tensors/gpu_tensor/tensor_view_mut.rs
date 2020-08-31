@@ -1,14 +1,17 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
 pub use crate::GpuAllocated;
-use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides, MutShapeStrideTrait};
+use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides, MutShapeStrideTrait, AsShaderInput};
 use async_trait::async_trait;
 use std::collections::VecDeque;
+
 /// Same as GpuTensorView but mutable
 pub struct GpuTensorViewMut<'a> {
     original_tensor: &'a mut GpuTensor,
     pub shape_strides: ShapeStrides,
 }
+
+impl <'a> AsShaderInput for GpuTensorViewMut<'a>{}
 
 #[async_trait(?Send)]
 impl<'a> GpuAllocated for GpuTensorViewMut<'a> {

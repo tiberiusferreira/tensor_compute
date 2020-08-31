@@ -7,6 +7,7 @@ mod transpose;
 mod clone;
 mod compare;
 
+mod tensor_tensor_ops;
 use crate::tensors::ShapeStrideTrait;
 use crate::{GpuAllocated, GpuTensor, GpuTensorView, GpuTensorViewMut, MutShapeStrideTrait};
 

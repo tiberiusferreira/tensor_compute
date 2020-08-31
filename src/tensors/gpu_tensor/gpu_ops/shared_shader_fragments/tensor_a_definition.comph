@@ -1,0 +1,24 @@
+/// TENSOR DEFINITION
+layout(set = 0, binding = 0) buffer TenA {
+    float[] ten_a;
+};
+
+layout(set = 0, binding = 1) uniform TenAShape {
+    uint[20] shape_a;
+};
+
+layout(set = 0, binding = 2) uniform TenAStrides {
+    uint[20] strides_a;
+};
+
+layout(set = 0, binding = 3) uniform TenAStrideShapeLen {
+    uint stride_shape_len_a;
+};
+
+layout(set = 0, binding = 4) uniform TenAOffset {
+    uint offset_a;
+};
+
+uint get_linear_offset_a(uint element_number){
+    return index_in_linear_memory_for_element_number(element_number, shape_a, strides_a, stride_shape_len_a, offset_a);
+}

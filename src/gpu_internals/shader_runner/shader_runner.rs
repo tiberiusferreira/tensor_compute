@@ -1,6 +1,5 @@
 use crate::gpu_internals::gpu_buffers::{GpuBuffer, GpuUniformBuffer};
 use crate::gpu_internals::GpuInstance;
-use std::borrow::Cow::Borrowed;
 use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 
 pub enum BufferType<'a> {
@@ -65,7 +64,7 @@ impl GpuInstance {
             self.device()
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                     label: None,
-                    entries: Borrowed(bindings_layouts.as_slice()),
+                    entries: bindings_layouts.as_slice(),
                 });
         let bindings: Vec<BindGroupEntry> = shader_inputs
             .iter()
@@ -74,21 +73,23 @@ impl GpuInstance {
         let bind_group = self.device().create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            entries: Borrowed(bindings.as_slice()),
+            entries: bindings.as_slice(),
         });
         let pipeline_layout =
             self.device()
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    bind_group_layouts: Borrowed(&[&bind_group_layout]),
-                    push_constant_ranges: Borrowed(&[]),
+                    label: None,
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
                 });
         let compute_pipeline =
             self.device()
                 .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                    label: None,
                     layout: Some(&pipeline_layout),
                     compute_stage: wgpu::ProgrammableStageDescriptor {
                         module: &shader,
-                        entry_point: Borrowed("main"),
+                        entry_point: &"main",
                     },
                 });
         let mut encoder = self
