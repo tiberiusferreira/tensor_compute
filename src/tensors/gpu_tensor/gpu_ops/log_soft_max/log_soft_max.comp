@@ -1,0 +1,24 @@
+#version 450
+layout(local_size_x = 1) in;
+
+layout(set = 0, binding = 0) buffer Data {
+    float[] data;
+};
+
+layout(set = 0, binding = 1) buffer Out {
+    float[] out_buffer;
+};
+
+shared uint sum_exp;
+
+void main() {
+    uint index = gl_GlobalInvocationID.x; // 0 1 2 3
+    float exp_res = exp(data[index]);
+    sum_exp = 0;
+    memoryBarrierShared();
+    barrier();
+//    atomicAdd(sum_exp, exp_res);
+    out_buffer[index] = float(sum_exp);
+}
+
+

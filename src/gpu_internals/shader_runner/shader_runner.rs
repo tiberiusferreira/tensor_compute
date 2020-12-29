@@ -2,43 +2,57 @@ use crate::gpu_internals::gpu_buffers::{GpuBuffer, GpuUniformBuffer};
 use crate::gpu_internals::GpuInstance;
 use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
 
+#[derive(Debug)]
 pub enum BufferType<'a> {
     Storage(&'a GpuBuffer),
-    Uniform(&'a GpuUniformBuffer),
-    UniformOwned(GpuUniformBuffer),
+    StorageOwned(GpuBuffer),
 }
 
 impl<'a> BufferType<'a> {
-    pub fn layout(&self, id: usize) -> BindGroupLayoutEntry {
+    pub fn layout(&self, id: u32) -> BindGroupLayoutEntry {
         match self {
             BufferType::Storage(a) => a.layout(id),
-            BufferType::Uniform(a) => a.layout(id),
-            BufferType::UniformOwned(a) => a.layout(id),
+            BufferType::StorageOwned(a) => a.layout(id),
         }
     }
     pub fn to_bind_resource(&self) -> BindingResource {
         match self {
             BufferType::Storage(a) => a.to_bind_resource(),
-            BufferType::Uniform(a) => a.to_bind_resource(),
-            BufferType::UniformOwned(a) => a.to_bind_resource(),
+            BufferType::StorageOwned(a) => a.to_bind_resource(),
         }
     }
 }
 
-pub struct ShaderInput<'a> {
-    pub binding_id: usize,
-    pub gpu_buffer: BufferType<'a>,
+#[derive(Debug, Default)]
+pub struct ShaderInputs<'a>{
+    pub bindings: Vec<ShaderBinding<'a>>,
+    pub push_constants: PushConstants
 }
 
-impl<'a> ShaderInput<'a> {
+impl <'a> ShaderInputs<'a>{
+    pub fn append_buffer(&mut self, gpu_buffer: &'a GpuBuffer){
+        self.bindings.push(ShaderBinding{
+            binding_id: self.bindings.len() as u32,
+            gpu_buffer_type: BufferType::Storage(gpu_buffer)
+        });
+    }
+}
+
+#[derive(Debug)]
+pub struct ShaderBinding<'a> {
+    pub binding_id: u32,
+    pub gpu_buffer_type: BufferType<'a>,
+}
+
+impl<'a> ShaderBinding<'a> {
     pub fn to_bind_group_layout(&self) -> BindGroupLayoutEntry {
-        self.gpu_buffer.layout(self.binding_id)
+        self.gpu_buffer_type.layout(self.binding_id)
     }
 
     pub fn to_bind_group(&self) -> BindGroupEntry {
         BindGroupEntry {
             binding: self.binding_id as u32,
-            resource: self.gpu_buffer.to_bind_resource(),
+            resource: self.gpu_buffer_type.to_bind_resource(),
         }
     }
 }
@@ -49,16 +63,23 @@ pub struct ThreadGroup {
     pub z: usize,
 }
 
+#[derive(Debug, Default)]
+pub struct PushConstants{
+    pub offset: u32,
+    pub data: Vec<u32>
+}
+
+
 impl GpuInstance {
     pub fn run_shader(
         &self,
         shader: &ShaderModule,
-        shader_inputs: Vec<ShaderInput>,
+        shader_inputs: &ShaderInputs,
         threads: ThreadGroup,
     ) {
-        let bindings_layouts: Vec<BindGroupLayoutEntry> = shader_inputs
+        let bindings_layouts: Vec<BindGroupLayoutEntry> = shader_inputs.bindings
             .iter()
-            .map(ShaderInput::to_bind_group_layout)
+            .map(ShaderBinding::to_bind_group_layout)
             .collect();
         let bind_group_layout =
             self.device()
@@ -66,9 +87,9 @@ impl GpuInstance {
                     label: None,
                     entries: bindings_layouts.as_slice(),
                 });
-        let bindings: Vec<BindGroupEntry> = shader_inputs
+        let bindings: Vec<BindGroupEntry> = shader_inputs.bindings
             .iter()
-            .map(ShaderInput::to_bind_group)
+            .map(ShaderBinding::to_bind_group)
             .collect();
         let bind_group = self.device().create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
@@ -80,7 +101,10 @@ impl GpuInstance {
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: None,
                     bind_group_layouts: &[&bind_group_layout],
-                    push_constant_ranges: &[],
+                    push_constant_ranges: &[wgpu::PushConstantRange{
+                        stages: wgpu::ShaderStage::COMPUTE,
+                        range: shader_inputs.push_constants.offset..4*shader_inputs.push_constants.data.len() as u32
+                    }],
                 });
         let compute_pipeline =
             self.device()
@@ -98,6 +122,7 @@ impl GpuInstance {
         {
             let mut compute_pass = encoder.begin_compute_pass();
             compute_pass.set_pipeline(&compute_pipeline);
+            compute_pass.set_push_constants(shader_inputs.push_constants.offset, shader_inputs.push_constants.data.as_slice());
             compute_pass.set_bind_group(0, &bind_group, &[]);
             compute_pass.dispatch(threads.x as u32, threads.y as u32, threads.z as u32);
         }

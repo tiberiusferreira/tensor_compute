@@ -1,18 +1,22 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
-use crate::gpu_internals::shader_runner::{BufferType, ShaderInput};
+use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ShaderInputs, PushConstants};
 use crate::gpu_internals::GpuInstance;
-use crate::{CpuTensor, ShapeStrideTrait};
+use crate::{CpuTensor, ShapeStrideTrait, GpuTensor};
 use async_trait::async_trait;
 use zerocopy::AsBytes;
+use std::process::exit;
 
 #[async_trait(?Send)]
 pub trait GpuAllocated {
     fn get_gpu(&self) -> &'static GpuInstance;
     fn internal_gpu_buffer(&self) -> &GpuBuffer;
-    fn internal_buffer_size_in_bytes(&self) -> usize {
+    fn buffer_size_in_bytes(&self) -> usize {
         self.internal_gpu_buffer().size_bytes()
     }
 }
+
+impl<'a> AsShaderInput for GpuTensor {}
+
 
 #[async_trait(?Send)]
 pub trait CpuTransferable {
@@ -37,55 +41,35 @@ where
 }
 
 pub trait AsShaderInput: GpuAllocated + ShapeStrideTrait {
-    fn to_shader_inputs(&self, binding_offset: usize) -> Vec<ShaderInput> {
-        let mut shape: Vec<u128> = self.shape().iter().map(|&e| e as u128).collect();
-        let mut strides: Vec<u128> = self.strides().iter().map(|&e| e as u128).collect();
-        // Uniform Buffer elements need to be 128bits each:
-        // see https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf page 146 (pdf page 168)
-        assert!(shape.len() <= 20, "Shape cant have more than 20 elements");
-        assert!(
-            strides.len() <= 20,
-            "Strides cant have more than 20 elements"
-        );
-        while shape.len() < 20 {
+    fn to_shader_inputs<'a>(&'a self, extend_from: Option<ShaderInputs<'a>>) -> ShaderInputs<'a> {
+        let ShaderInputs{
+            mut bindings,
+            mut push_constants
+        } = extend_from.unwrap_or_default();
+
+        let mut shape: Vec<u32> = self.shape().iter().map(|&e| e as u32).collect();
+        let mut strides: Vec<u32> = self.strides().iter().map(|&e| e as u32).collect();
+        while shape.len() < 8{
             shape.push(0);
         }
-        while strides.len() < 20 {
+        while strides.len() < 8{
             strides.push(0);
         }
         let shape_strides_len = self.shape().len() as u32;
-        let offset = self.offset() as u32;
-        let shape_as_uniform = self
-            .get_gpu()
-            .new_uniform_buffer(shape.as_slice().as_bytes());
-        let strides_as_uniform = self
-            .get_gpu()
-            .new_uniform_buffer(strides.as_slice().as_bytes());
-        let shape_strides_len_as_uniform = self
-            .get_gpu()
-            .new_uniform_buffer(shape_strides_len.as_bytes());
-        let offset_as_uniform = self.get_gpu().new_uniform_buffer(offset.as_bytes());
-        vec![
-            ShaderInput {
-                binding_id: binding_offset,
-                gpu_buffer: BufferType::Storage(self.internal_gpu_buffer()),
-            },
-            ShaderInput {
-                binding_id: binding_offset + 1,
-                gpu_buffer: BufferType::UniformOwned(shape_as_uniform),
-            },
-            ShaderInput {
-                binding_id: binding_offset + 2,
-                gpu_buffer: BufferType::UniformOwned(strides_as_uniform),
-            },
-            ShaderInput {
-                binding_id: binding_offset + 3,
-                gpu_buffer: BufferType::UniformOwned(shape_strides_len_as_uniform),
-            },
-            ShaderInput {
-                binding_id: binding_offset + 4,
-                gpu_buffer: BufferType::UniformOwned(offset_as_uniform),
-            },
-        ]
+        push_constants.data.push(shape_strides_len);
+        push_constants.data.extend_from_slice(shape.as_slice());
+        push_constants.data.extend_from_slice(strides.as_slice());
+        // let offset = self.offset() as u32;
+        // let offset_as_buffer = self.get_gpu().new_gpu_buffer_from_data(offset.as_bytes());
+
+        bindings.push(
+            ShaderBinding {
+                binding_id: bindings.len() as u32,
+                gpu_buffer_type: BufferType::Storage(self.internal_gpu_buffer()),
+            });
+        ShaderInputs{
+            bindings,
+            push_constants
+        }
     }
 }

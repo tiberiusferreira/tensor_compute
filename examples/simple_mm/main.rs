@@ -1,9 +1,9 @@
-use tensor_compute::{GpuStore, Tensor};
+use tensor_compute::{GpuStore, RawTensor};
 
 fn main() {
     println!("Running in {:?}", GpuStore::get_default().info());
-    let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
-    let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]);
+    let ma = RawTensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
+    let mb = RawTensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]);
     let result = ma.matmul(&mb);
     println!("{:?}", result);
     /*

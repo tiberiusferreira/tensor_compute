@@ -5,6 +5,7 @@
 //! supporting either `Vulkan`, `Metal` or `DX12`. It can run even on a *Raspberry Pi 4 GPU*.
 //!
 //! The API entry point is the [`Tensor`] structure.
+mod autograd;
 mod tensors;
 pub use tensors::*;
 pub use gpu_store::*;

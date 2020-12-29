@@ -1,22 +1,37 @@
 #version 450
-#include "../shared_shader_fragments/el_number_to_lin_mem_idx.comph"
-#include "../shared_shader_fragments/tensor_a_definition.comph"
-#include "../shared_shader_fragments/tensor_b_definition.comph"
+#include "../shared_shader_fragments/el_number_to_lin_mem_idx_new.comph"
 
 layout(local_size_x = 1) in;
 
 
-layout(set = 0, binding = 10) buffer Output {
-    float output_val;
+layout(push_constant) uniform PushConsts {
+    uint shape_stride_len_left;
+    uint[8] shape_left;
+    uint[8] strides_left;
+    uint shape_stride_len_right;
+    uint[8] shape_right;
+    uint[8] strides_right;
 };
 
 
+layout(set = 0, binding = 0) buffer Left {
+    float[] left;
+};
+
+layout(set = 0, binding = 1) buffer Right {
+    float[] right;
+};
+
+layout(set = 0, binding = 2) buffer Output {
+    float output_val;
+};
+
 void main() {
     uint element_number = gl_GlobalInvocationID.x;
-    uint linear_offset_a = get_linear_offset_a(element_number);
-    uint linear_offset_b = get_linear_offset_b(element_number);
+    uint linear_offset_a = index_in_linear_memory_for_element_number(element_number, shape_left, strides_left, shape_stride_len_left, 0);
+    uint linear_offset_b = index_in_linear_memory_for_element_number(element_number, shape_right, strides_right, shape_stride_len_right, 0);
 
-    if (ten_a[linear_offset_a] != ten_b[linear_offset_b]){
+    if (left[linear_offset_a] != right[linear_offset_b]){
         output_val = 1;
     }
 }

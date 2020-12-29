@@ -1,14 +1,16 @@
 use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
 use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait};
-
+use std::collections::VecDeque;
 #[cfg(test)]
 mod tests;
 
-pub async fn clone<'a>(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("clone.spv"));
+pub async fn log_soft_max(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
+    assert_eq!(data.shape_strides.shape.len(), 1, "Can only apply log_soft_max to one dimensional tensors");
+    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("log_soft_max.spv"));
+    let output_buffer = gpu.new_empty_gpu_buffer(data.buffer.size_bytes());
     let nb_output_numbers = data.numel();
-    let output = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+
     // gpu.run_shader(
     //     &cs_module,
     //     vec![
@@ -18,7 +20,7 @@ pub async fn clone<'a>(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
     //         },
     //         ShaderBinding {
     //             binding_id: 1,
-    //             gpu_buffer: BufferType::Storage(&output),
+    //             gpu_buffer: BufferType::Storage(&output_buffer),
     //         },
     //     ],
     //     None,
@@ -28,9 +30,6 @@ pub async fn clone<'a>(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
     //         z: 1,
     //     },
     // );
-    // GpuTensor {
-    //     buffer: output,
-    //     shape_strides: data.shape_strides.clone(),
-    // }
+    // GpuTensor::from_buffer(output_buffer, data.shape_strides.shape.clone())
     unimplemented!()
 }

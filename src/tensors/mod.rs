@@ -13,224 +13,22 @@ pub mod prelude;
 /// of this crate. This is normally backed by GPU memory and its device chosen using the current
 /// default of the [`crate::GpuStore::get_default()`], which can be changed however, one can NOT
 /// do operations using two Tensors from different devices.
-pub struct Tensor {
+pub struct RawTensor {
     actual_tensor: GpuTensor,
 }
 
 /// Beware, printing the Tensor forces a copy from GPU memory to CPU memory. For now, the whole
 /// Tensor is copied, but could  be optimized in the future. Since this is meant for debugging,
 /// optimizing it is not a high priority.
-impl Debug for Tensor {
+impl Debug for RawTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.actual_tensor.fmt(f)
     }
 }
 
-/// A view into the original [`Tensor`]. A view borrows part of (or even the entirety of) the
-/// original Tensor data. It can NOT modify the data itself. It is normally produced by indexing or
-/// slicing a Tensor.
-///
-/// It can be useful for creating a new Tensor from part of another one:
-///
-/// # Examples
-///
-/// ```
-/// use tensor_compute::{Tensor, TensorView, s};
-/// let tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
-/// let first_row: TensorView = tensor.slice(s![1]);
-/// assert_eq!(first_row.shape(), &[1, 2]);
-/// assert_eq!(first_row.to_cpu().as_contiguous_vec(), &[3., 4.]);
-/// let new_tensor = first_row.make_contiguous(); // creates a new owned tensor from the view
-/// assert_eq!(new_tensor.shape(), &[1, 2]);
-/// assert_eq!(new_tensor.to_cpu().as_contiguous_vec(), &[3., 4.]);
-/// ```
-pub struct TensorView<'a> {
-    actual_tensor: GpuTensorView<'a>,
-}
-
-/// Beware, printing the TensorView forces a copy from GPU memory to CPU memory.
-impl <'a> Debug for TensorView<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        block_on(self.actual_tensor.to_cpu()).fmt(f)
-    }
-}
-
-impl<'a> TensorView<'a> {
-    /// Same as [`TensorView::make_contiguous`], but async.
-    pub async fn make_contiguous_async(&self) -> Tensor {
-        Tensor{
-            actual_tensor: self.actual_tensor.contiguous().await
-        }
-    }
-
-    /// Copies the [`TensorView`] into a standalone contiguous [`Tensor`]
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, TensorView, s};
-    /// let tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
-    /// let first_row: TensorView = tensor.slice(s![1]);
-    /// assert_eq!(first_row.shape(), &[1, 2, 2]);
-    /// assert_eq!(first_row.to_cpu().as_contiguous_vec(), &[5., 6., 7., 8.]);
-    /// let new_tensor = first_row.make_contiguous(); // creates a new owned tensor from the view
-    /// assert_eq!(new_tensor.shape(), &[1, 2, 2]);
-    /// assert_eq!(new_tensor.to_cpu().as_contiguous_vec(), &[5., 6., 7., 8.]);
-    /// assert!(new_tensor.slice(s![..]).compare(&first_row));
-    /// ```
-    pub fn make_contiguous(&self) -> Tensor {
-        block_on(self.make_contiguous_async())
-    }
-
-
-    /// Same as [`Tensor::compare_async`]
-    pub async fn compare_async(&self, other: &Self) -> bool {
-        self.actual_tensor.eq(&other.actual_tensor).await
-    }
-
-    /// Same as [`Tensor::compare`]
-    pub fn compare(&self, other: &Self) -> bool {
-        block_on(self.actual_tensor.eq(&other.actual_tensor))
-    }
-
-    /// Same as [`Tensor::shape`]
-    pub fn shape(&self) -> &VecDeque<usize> {
-        self.actual_tensor.shape()
-    }
-
-    /// Same as [`Tensor::strides`]
-    pub fn strides(&self) -> &VecDeque<usize> {
-        self.actual_tensor.strides()
-    }
-
-    /// Same as [`Tensor::to_cpu_async`]
-    pub async fn to_cpu_async(&self) -> CpuTensor {
-        self.actual_tensor.to_cpu().await
-    }
-
-    /// Same as [`Tensor::to_cpu`]
-    pub fn to_cpu(&self) -> CpuTensor {
-        block_on(self.to_cpu_async())
-    }
-
-
-    /// Adds both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, CpuTransferable};
-    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
-    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
-    /// let result = tensor_left.view().add(&tensor_right.view());
-    /// assert_eq!(
-    ///     result.to_cpu().as_contiguous_vec(),
-    ///     &[3., 5., 7., 9.]
-    /// );
-    /// ```
-    pub fn add(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: block_on(self.actual_tensor.add(&other.actual_tensor))
-        }
-    }
-
-    /// Same as [`TensorView::add`] but async
-    pub async fn add_async(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: self.actual_tensor.add(&other.actual_tensor).await
-        }
-    }
-
-
-    /// Subtracts both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, CpuTransferable};
-    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
-    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
-    /// let result = tensor_left.view().sub(&tensor_right.view());
-    /// assert_eq!(
-    ///     result.to_cpu().as_contiguous_vec(),
-    ///     &[-1., -1., -1., -1.]
-    /// );
-    /// ```
-    pub fn sub(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: block_on(self.actual_tensor.sub(&other.actual_tensor))
-        }
-    }
-
-    /// Same as [`TensorView::sub`] but async
-    pub async fn sub_async(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: self.actual_tensor.sub(&other.actual_tensor).await
-        }
-    }
-
-
-    /// Multiplies element wise both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, CpuTransferable};
-    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
-    /// let tensor_right = Tensor::from_data_1d(vec![2., 3., 4., 5.]);
-    /// let result = tensor_left.view().dot_mul(&tensor_right.view());
-    /// assert_eq!(
-    ///     result.to_cpu().as_contiguous_vec(),
-    ///     &[2., 6., 12., 20.]
-    /// );
-    /// ```
-    pub fn dot_mul(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: block_on(self.actual_tensor.dot_mul(&other.actual_tensor))
-        }
-    }
-
-    /// Same as [`TensorView::dot_mul`] but async
-    pub async fn dot_mul_async(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: self.actual_tensor.dot_mul(&other.actual_tensor).await
-        }
-    }
-
-    /// Divides element wise both [`TensorView`]s returning the result as a new contiguous [`Tensor`].
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, CpuTransferable};
-    /// let tensor_left = Tensor::from_data_1d(vec![1., 2., 10., 4.]);
-    /// let tensor_right = Tensor::from_data_1d(vec![2., 8., 2., 1.]);
-    /// let result = tensor_left.view().dot_div(&tensor_right.view());
-    /// assert_eq!(
-    ///     result.to_cpu().as_contiguous_vec(),
-    ///     &[0.5, 0.25, 5., 4.]
-    /// );
-    /// ```
-    pub fn dot_div(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: block_on(self.actual_tensor.dot_div(&other.actual_tensor))
-        }
-    }
-
-    /// Same as [`TensorView::dot_div`] but async
-    pub async fn dot_div_async(&self, other: &Self) -> Tensor {
-        Tensor{
-            actual_tensor: self.actual_tensor.dot_div(&other.actual_tensor).await
-        }
-    }
-}
 
 /// Clones the Tensor data, shape, strides
-impl Clone for Tensor {
+impl Clone for RawTensor {
     fn clone(&self) -> Self {
         Self {
             actual_tensor: blocking::block_on(self.actual_tensor.clone()),
@@ -238,7 +36,7 @@ impl Clone for Tensor {
     }
 }
 
-impl Tensor {
+impl RawTensor {
     /*******  Constructors  *******/
 
     /// Returns an empty 0 dimensional [`Tensor`]. Could be useful as a placeholder.
@@ -246,12 +44,12 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::empty();
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::empty();
     /// assert_eq!(tensor.shape(), &[]);
     /// ```
     pub fn empty() -> Self {
-        Tensor {
+        RawTensor {
             actual_tensor: GpuTensor::from(vec![], vec![])
         }
     }
@@ -261,14 +59,14 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::from_data_1d(vec![1., 2., 3., 4.]);
     /// assert_eq!(tensor.shape(), &[4]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
     /// ```
     pub fn from_data_1d(vec: Vec<f32>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
-        Tensor {
+        RawTensor {
             actual_tensor: GpuTensor::from_data_1d(vec),
         }
     }
@@ -279,15 +77,15 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![1., 2., 3., 4.]);
     /// ```
     pub fn from_data_and_shape(vec: Vec<f32>, shape: Vec<usize>) -> Self {
         assert!(!vec.is_empty(), "Data cant be empty!");
         assert!(!shape.is_empty(), "Shape cant be empty!");
-        Tensor {
+        RawTensor {
             actual_tensor: GpuTensor::from(vec, shape),
         }
     }
@@ -297,13 +95,13 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::zeros(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::zeros(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), vec![0., 0., 0., 0.]);
     /// ```
     pub fn zeros(shape: Vec<usize>) -> Self {
-        block_on(Tensor::zeros_async(shape))
+        block_on(RawTensor::zeros_async(shape))
     }
 
     /// Same as [`Tensor::zeros`], but async.
@@ -320,8 +118,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     /// let result = tensor.to_cpu().as_contiguous_vec();
     /// for val in &result{
@@ -341,9 +139,9 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let original_tensor = Tensor::rand(vec![2, 2]);
-    /// let new_tensor = Tensor::zeros_like(&original_tensor);
+    /// use tensor_compute::RawTensor;
+    /// let original_tensor = RawTensor::rand(vec![2, 2]);
+    /// let new_tensor = RawTensor::zeros_like(&original_tensor);
     /// assert_eq!(new_tensor.shape(), &[2, 2]);
     /// assert_eq!(new_tensor.to_cpu().as_contiguous_vec(), &[0., 0., 0., 0.]);
     ///
@@ -363,8 +161,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::rand(vec![2, 2]);
     /// let new_tensor = tensor.clone();
     /// assert_eq!(tensor.shape(), new_tensor.shape());
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), new_tensor.to_cpu().as_contiguous_vec());
@@ -390,8 +188,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.shape(), &[2, 2]);
     ///
     /// ```
@@ -419,8 +217,8 @@ impl Tensor {
     ///
     /// # Examples
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let tensor = Tensor::rand(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let tensor = RawTensor::rand(vec![2, 2]);
     /// assert_eq!(tensor.strides(), &[2, 1]);
     ///
     /// ```
@@ -435,8 +233,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let mut tensor = Tensor::rand(vec![2, 2]);
+    /// use tensor_compute::RawTensor;
+    /// let mut tensor = RawTensor::rand(vec![2, 2]);
     /// tensor.fill_with(5.);
     /// assert_eq!(tensor.to_cpu().as_contiguous_vec(), &[5., 5., 5., 5.]);
     ///
@@ -450,6 +248,55 @@ impl Tensor {
         self.actual_tensor.fill_with(value).await;
     }
 
+    /// Adds both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{RawTensor, CpuTransferable};
+    /// let tensor_left = RawTensor::from_data_1d(vec![1., 2., 3., 4.]);
+    /// let tensor_right = RawTensor::from_data_1d(vec![2., 3., 4., 5.]);
+    /// let result = tensor_left.add(&tensor_right);
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[3., 5., 7., 9.]
+    /// );
+    /// ```
+    pub fn add(&self, other: &Self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.add(&other.actual_tensor))
+        }
+    }
+
+    /// Adds both [`Tensor`]s returning the result as a new contiguous [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tensor_compute::{RawTensor, CpuTransferable};
+    /// let tensor_left = RawTensor::from_data_1d(vec![1., 2., 3., 10.]);
+    /// let tensor_right = RawTensor::from_data_1d(vec![2., 3., 4., 5.]);
+    /// let result = tensor_left.sub(&tensor_right);
+    /// assert_eq!(
+    ///     result.to_cpu().as_contiguous_vec(),
+    ///     &[-1., -1., -1., 5.]
+    /// );
+    /// ```
+    pub fn sub(&self, other: &Self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.sub(&other.actual_tensor))
+        }
+    }
+
+    // /// Same as [`TensorView::add`] but async
+    // pub async fn add_async(&self, other: &Self) -> Tensor {
+    //     Tensor{
+    //         actual_tensor: self.actual_tensor.add(&other.actual_tensor).await
+    //     }
+    // }
+
     /// Same as [Tensor::matmul], but async.
     pub async fn matmul_async(&mut self, other: &Self) -> Self {
         Self {
@@ -457,35 +304,20 @@ impl Tensor {
         }
     }
 
-    /// Does a batch 2D matrix multiplication of `self` and the `other`. Inputs must be of rank
-    /// 2 or 3.
-    ///
-    /// The third dimension is broadcast between them (if it exists, othersize 1 is used and later
-    /// removed), so they must be broadcastable.
+    /// Does a batch 2D matrix multiplication of `self` and the `other`. Inputs must be of rank 3.
     ///
     /// The first two dimensions must be compatible with Matrix Multiplication, that is:
-    /// if `self` has dimensions `[1, 2, 3]`, other must have `[N, 3, M]`, where N and M are any number.
+    /// if `self` has dimensions `[1, 2, 3]`, other must have `[1, 3, M]`, where M is any number.
     ///
     /// # Examples
     ///
-    /// Matmul with shapes `[2, 2, 2]` and `[2, 2]`. Broadcasting second [`Tensor`] to rank 3.
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
-    /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [2, 2, 2]
+    /// use tensor_compute::RawTensor;
+    /// let ma = RawTensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
+    /// let mb = RawTensor::from_data_and_shape(vec![2., 3., 4., 5., 2., 3., 4., 5.], vec![2, 2, 2]);
     /// let result = ma.matmul(&mb);
     /// assert_eq!(result.shape(), &[2, 2, 2]);
     /// assert_eq!(result.to_cpu().as_contiguous_vec(), &[10., 13., 22., 29., 34., 45., 46., 61.]);
-    /// ```
-    ///
-    /// Matmul with shapes `[2, 2]` and `[2, 2]`. Broadcasting both to rank 3.
-    /// ```
-    /// use tensor_compute::Tensor;
-    /// let ma = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
-    /// let mb = Tensor::from_data_and_shape(vec![2., 3., 4., 5.], vec![2, 2]); // will be broadcasted to shape [1, 2, 2]
-    /// let result = ma.matmul(&mb);
-    /// assert_eq!(result.shape(), &[2, 2]);
-    /// assert_eq!(result.to_cpu().as_contiguous_vec(), &[10., 13., 22., 29.]);
     /// ```
     pub fn matmul(&self, other: &Self) -> Self {
         Self {
@@ -512,8 +344,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+    /// use tensor_compute::RawTensor;
+    /// let mut tensor = RawTensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
     /// let relu_result = tensor.relu(0.1);
     /// assert_eq!(relu_result.to_cpu().as_contiguous_vec(), &[1., 2., 3., -0.1, -0.5, 10.]);
     /// ```
@@ -523,11 +355,24 @@ impl Tensor {
         }
     }
 
+    /// Applies the following LogSoftmax operation to all elements of the [`Tensor`].
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// TODO
+    /// ```
+    // pub fn softmax(&self) -> Self {
+    //     Self {
+    //         actual_tensor: block_on(self.actual_tensor),
+    //     }
+    // }
+
     /// Same as [Tensor::compare], but async.
     pub async fn compare_async(&self, other: &Self) -> bool {
         self.actual_tensor
-            .view()
-            .eq(&other.actual_tensor.view())
+            .eq(&other.actual_tensor)
             .await
     }
 
@@ -537,18 +382,18 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::Tensor;
-    /// let mut tensor = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
-    /// let mut tensor_diff_shape = Tensor::from_data_and_shape(vec![1., 2., 3., -1., -5., 10.], vec![2, 3]);
-    /// let mut tensor_diff_data = Tensor::from_data_1d(vec![9999., 2., 3., -1., -5., 10.]);
-    /// let mut tensor_same_shape_data = Tensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+    /// use tensor_compute::RawTensor;
+    /// let mut tensor = RawTensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
+    /// let mut tensor_diff_shape = RawTensor::from_data_and_shape(vec![1., 2., 3., -1., -5., 10.], vec![2, 3]);
+    /// let mut tensor_diff_data = RawTensor::from_data_1d(vec![9999., 2., 3., -1., -5., 10.]);
+    /// let mut tensor_same_shape_data = RawTensor::from_data_1d(vec![1., 2., 3., -1., -5., 10.]);
     /// assert!(tensor.compare(&tensor_same_shape_data));
     /// assert!(!tensor.compare(&tensor_diff_data));
     /// assert!(!tensor.compare(&tensor_diff_shape));
     /// assert!(!tensor.compare(&tensor_diff_shape));
     /// ```
     pub fn compare(&self, other: &Self) -> bool {
-        block_on(self.actual_tensor.view().eq(&other.actual_tensor.view()))
+        block_on(self.actual_tensor.eq(&other.actual_tensor))
     }
 
     /*******  Conversions  *******/
@@ -566,53 +411,12 @@ impl Tensor {
         block_on(self.actual_tensor.to_cpu())
     }
 
-    /*******  Indexing Ops  *******/
-
-    /// Slices a [`Tensor`] into a [`TensorView`] using information from [`SliceRangeInfo`]s.
-    ///
-    /// An ergonomic way of creating [`SliceRangeInfo`]s is the [`s`] macro, which takes either:
-    ///
-    /// - A single number, representing which `element` of a given dimension to take.
-    /// - start:step:exclusive_end representing which range of `elements` of a given dimension to take.
-    /// - Normal Rust range representing which range of `elements` of a given dimension to take.
-    ///   One can use Rust ranges to represent "take all elements" using (..).
-    ///   For example: (0..=10), (0..10) or (..).
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use tensor_compute::{Tensor, s};
-    /// let mut tensor = Tensor::from_data_and_shape(vec![1., 2., 3., 4., 5., 6., 7., 8.], vec![2, 2, 2]);
-    /// let tensor_slice = tensor.slice(s![0;..;1]);
-    /// assert_eq!(tensor_slice.shape(), &[1, 2, 1]);
-    /// assert_eq!(tensor_slice.to_cpu().as_contiguous_vec(), &[2., 4.]);
-    /// ```
-    pub fn slice<T: Into<SliceRangeInfo>>(&self, indices: Vec<T>) -> TensorView {
-        TensorView {
-            actual_tensor: self.actual_tensor.slice(indices),
-        }
-    }
-
-    /// Same as [Tensor::assign], but async.
-    pub async fn assign_async<T: Into<SliceRangeInfo>>(&mut self, indices: Vec<T>, value: f32) {
-        self.actual_tensor.assign(indices, value).await;
-    }
-
-
-    /// Assigns a single value to all [`SliceRangeInfo`]s.
-    /// Not quite sure about this yet. Maybe it is better to create a mutable slice and allow
-    /// assigning to it both a regular f32 and also a [`Tensor`] or [`TensorView`] with same shape
-    ///
-    pub fn assign<T: Into<SliceRangeInfo>>(&mut self, indices: Vec<T>, value: f32) {
-        block_on(self.actual_tensor.assign(indices, value));
-    }
 
     /*******  Shape Changing  *******/
 
     /// Same as [Tensor::transpose], but async.
-    pub async fn transpose_async(&self) -> Tensor {
-        Tensor{
+    pub async fn transpose_async(&self) -> RawTensor {
+        RawTensor {
             actual_tensor:self.actual_tensor.transpose().await
         }
     }
@@ -625,8 +429,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::{Tensor, s};
-    /// let mut original = Tensor::from_data_and_shape(
+    /// use tensor_compute::{RawTensor, s};
+    /// let mut original = RawTensor::from_data_and_shape(
     ///     vec![1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.],
     ///     vec![1, 2, 2, 3],
     /// );
@@ -649,7 +453,7 @@ impl Tensor {
     ///     &[1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]
     /// );
     /// ```
-    pub fn transpose(&self) -> Tensor {
+    pub fn transpose(&self) -> RawTensor {
         block_on(self.transpose_async())
     }
 
@@ -662,8 +466,8 @@ impl Tensor {
     /// # Examples
     ///
     /// ```
-    /// use tensor_compute::{Tensor, s};
-    /// let mut tensor = Tensor::from_data_and_shape(
+    /// use tensor_compute::{RawTensor, s};
+    /// let mut tensor = RawTensor::from_data_and_shape(
     ///     vec![1., 2., 3., 4., 5., 6., 7., 8.],
     ///     vec![2, 4],
     /// );
@@ -681,11 +485,11 @@ impl Tensor {
         self.actual_tensor.reshape(new_shape);
     }
 
-    pub fn view(&self) -> TensorView{
-        TensorView{
-            actual_tensor: self.actual_tensor.view()
-        }
-    }
+    // pub fn view(&self) -> TensorView{
+    //     TensorView{
+    //         actual_tensor: self.actual_tensor.view()
+    //     }
+    // }
 
 
 }

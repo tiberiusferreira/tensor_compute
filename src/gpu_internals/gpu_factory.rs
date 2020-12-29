@@ -35,8 +35,11 @@ impl GpuFactory {
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
+                    features: wgpu::Features::PUSH_CONSTANTS,
+                    limits: wgpu::Limits{
+                        max_push_constant_size: 256,
+                        ..wgpu::Limits::default()
+                    },
                     shader_validation: true,
                 },
                 Some(std::path::Path::new("traces")),

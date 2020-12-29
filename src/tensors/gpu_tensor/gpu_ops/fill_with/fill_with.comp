@@ -1,14 +1,16 @@
 #version 450
 layout(local_size_x = 1) in;
 
-layout(set = 0, binding = 0) buffer FillVal {
-    float fill_value;
-};
-
-layout(set = 0, binding = 1) buffer Out {
+layout(set = 0, binding = 0) buffer Out {
     float[] out_buffer;
 };
 
+layout(push_constant) uniform PushConsts {
+    uint shape_stride_len;
+    uint[8] shape;
+    uint[8] strides;
+    float fill_value;
+};
 
 void main() {
     uint index = gl_GlobalInvocationID.x; // 0 1 2 3

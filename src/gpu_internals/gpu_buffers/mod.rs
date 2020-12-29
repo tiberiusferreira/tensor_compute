@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use wgpu::util::DeviceExt;
 use wgpu::{AdapterInfo, Buffer};
 
+#[derive(Debug)]
 pub struct GpuBuffer {
     /// The WebGPU buffer itself
     buffer: Buffer,
@@ -37,9 +38,9 @@ impl GpuUniformBuffer {
 }
 
 impl GpuBuffer {
-    pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
+    pub fn layout(&self, binding: u32) -> wgpu::BindGroupLayoutEntry {
         wgpu::BindGroupLayoutEntry {
-            binding: binding as u32,
+            binding,
             visibility: wgpu::ShaderStage::COMPUTE,
             ty: wgpu::BindingType::StorageBuffer {
                 dynamic: false,
@@ -96,20 +97,20 @@ impl GpuInstance {
         }
     }
 
-    pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer {
-        let buffer_descriptor = wgpu::util::BufferInitDescriptor {
-            label: None,
-            contents: input_bytes,
-            usage: wgpu::BufferUsage::UNIFORM,
-        };
-        let buffer = self.device().create_buffer_init(&buffer_descriptor);
-
-        GpuUniformBuffer {
-            buffer,
-            size_bytes: input_bytes.len(),
-            device_info: self.info().clone(),
-        }
-    }
+    // pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer {
+    //     let buffer_descriptor = wgpu::util::BufferInitDescriptor {
+    //         label: None,
+    //         contents: input_bytes,
+    //         usage: wgpu::BufferUsage::UNIFORM,
+    //     };
+    //     let buffer = self.device().create_buffer_init(&buffer_descriptor);
+    //
+    //     GpuUniformBuffer {
+    //         buffer,
+    //         size_bytes: input_bytes.len(),
+    //         device_info: self.info().clone(),
+    //     }
+    // }
 
     /// Storage buffer with given data. Behind the scenes it actually creates a new buffer, maps
     /// it into host-visible memory, copies data from the given slice,

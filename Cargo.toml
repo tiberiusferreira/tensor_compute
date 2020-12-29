@@ -11,7 +11,7 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 futures = "0.3.5"
-wgpu = "0.6.0"
+wgpu = "0.6.2"
 async-trait = "0.1.36"
 rand = "0.7"
 winit = "0.22.2"
