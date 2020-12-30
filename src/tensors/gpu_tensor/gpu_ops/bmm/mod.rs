@@ -3,7 +3,7 @@ mod tests;
 
 use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait, RawTensor};
+use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait, RawTensor, AsShaderInput};
 use std::collections::VecDeque;
 use zerocopy::{AsBytes, FromBytes};
 
@@ -37,22 +37,22 @@ pub async fn bmm_kernel(
 
     assert_eq!(left.shape()[2], right.shape()[1], "Incompatible shapes for matmul");
 
-    let shapes = Shapes {
-        batch_size: left.shape()[0] as u32,
-        stride_batch_size_a: left.strides()[0] as u32,
-        stride_batch_size_b: right.strides()[0] as u32,
-        rows_a: left.shape()[1] as u32,
-        stride_rows_a: left.strides()[1] as u32,
-        cols_a: left.shape()[2] as u32,
-        stride_cols_a: left.strides()[2] as u32,
-        rows_b: right.shape()[1] as u32,
-        stride_rows_b: right.strides()[1] as u32,
-        cols_b: right.shape()[2] as u32,
-        stride_cols_b: right.strides()[2] as u32,
-    };
+    let shader_inputs = left.to_shader_inputs(None);
+    let mut shader_inputs = right.to_shader_inputs(Some(shader_inputs));
+    shader_inputs.push_constants.data.clear();
+    shader_inputs.push_constants.data.push(left.shape()[0] as u32); // batch_size
+    shader_inputs.push_constants.data.push(left.strides()[0] as u32); // stride_batch_size_a
+    shader_inputs.push_constants.data.push(right.strides()[0] as u32); // stride_batch_size_b
+    shader_inputs.push_constants.data.push(left.shape()[1] as u32); // rows_a
+    shader_inputs.push_constants.data.push(left.strides()[1] as u32); // stride_rows_a
+    shader_inputs.push_constants.data.push(left.shape()[2] as u32); // cols_a
+    shader_inputs.push_constants.data.push(left.strides()[2] as u32); // stride_cols_a
+    shader_inputs.push_constants.data.push(right.shape()[1] as u32); // rows_b
+    shader_inputs.push_constants.data.push(right.strides()[1] as u32); // stride_rows_b
+    shader_inputs.push_constants.data.push(right.shape()[2] as u32); // cols_b
+    shader_inputs.push_constants.data.push(right.strides()[2] as u32); // stride_cols_b
 
     let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("bmm.spv"));
-
     let output_shape = vec![
         left.shape()[0],
         left.shape()[1],
@@ -60,35 +60,16 @@ pub async fn bmm_kernel(
     ];
     let nb_output_numbers = GpuTensor::numel_from_shape(&VecDeque::from(output_shape.clone()));
     let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+    shader_inputs.append_buffer(&out_buffer_store);
 
-    let input_structure_data = gpu.new_gpu_buffer_from_data(shapes.as_bytes());
-    // gpu.run_shader(
-    //     &cs_module,
-    //     vec![
-    //         ShaderBinding {
-    //             binding_id: 0,
-    //             gpu_buffer: BufferType::Storage(left.internal_gpu_buffer()),
-    //         },
-    //         ShaderBinding {
-    //             binding_id: 1,
-    //             gpu_buffer: BufferType::Storage(right.internal_gpu_buffer()),
-    //         },
-    //         ShaderBinding {
-    //             binding_id: 2,
-    //             gpu_buffer: BufferType::Storage(&out_buffer_store),
-    //         },
-    //         ShaderBinding {
-    //             binding_id: 3,
-    //             gpu_buffer: BufferType::Storage(&input_structure_data),
-    //         },
-    //     ],
-    //     None,
-    //     ThreadGroup {
-    //         x: nb_output_numbers,
-    //         y: 1,
-    //         z: 1,
-    //     },
-    // );
-    // GpuTensor::from_buffer(out_buffer_store, VecDeque::from(output_shape))
-    unimplemented!()
+    gpu.run_shader(
+        &cs_module,
+            &shader_inputs,
+        ThreadGroup {
+            x: nb_output_numbers,
+            y: 1,
+            z: 1,
+        },
+    );
+    GpuTensor::from_buffer(out_buffer_store, VecDeque::from(output_shape))
 }
