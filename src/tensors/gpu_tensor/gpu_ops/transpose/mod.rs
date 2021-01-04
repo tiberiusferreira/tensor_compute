@@ -1,28 +1,31 @@
-use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
+// use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait};
-use zerocopy::{AsBytes, FromBytes};
-#[cfg(test)]
-mod tests;
+use crate::{GpuTensor};
+// use zerocopy::{AsBytes, FromBytes};
+// #[cfg(test)]
+// mod tests;
+//
+// #[repr(C)]
+// #[derive(AsBytes, FromBytes, Clone, Debug)]
+// struct TensorStructure {
+//     nb_shapes: u32,
+// }
 
-#[repr(C)]
-#[derive(AsBytes, FromBytes, Clone, Debug)]
-struct TensorStructure {
-    nb_shapes: u32,
-}
-
-pub async fn transpose(gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("transpose.spv"));
-    let nb_output_numbers = data.numel();
-    let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
-
-    let shape_u32: Vec<u32> = data.shape().iter().map(|e| *e as u32).collect();
-    let shapes = gpu.new_gpu_buffer_from_data(shape_u32.as_slice().as_bytes());
-
-    let strides_u32: Vec<u32> = data.strides().iter().map(|e| *e as u32).collect();
-    let strides = gpu.new_gpu_buffer_from_data(strides_u32.as_slice().as_bytes());
-
-    let nb_shapes = gpu.new_gpu_buffer_from_data((shape_u32.len() as u32).as_bytes());
+pub async fn transpose(_gpu: &GpuInstance, data: &GpuTensor) -> GpuTensor {
+    if data.is_empty(){
+        return data.clone().await;
+    }
+    // let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("transpose.spv"));
+    // let nb_output_numbers = data.numel();
+    // let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+    //
+    // let shape_u32: Vec<u32> = data.shape().iter().map(|e| *e as u32).collect();
+    // let shapes = gpu.new_gpu_buffer_from_data(shape_u32.as_slice().as_bytes());
+    //
+    // let strides_u32: Vec<u32> = data.strides().iter().map(|e| *e as u32).collect();
+    // let strides = gpu.new_gpu_buffer_from_data(strides_u32.as_slice().as_bytes());
+    //
+    // let nb_shapes = gpu.new_gpu_buffer_from_data((shape_u32.len() as u32).as_bytes());
     //
     // gpu.run_shader(
     //     &cs_module,

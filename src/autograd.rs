@@ -1,15 +1,15 @@
 
 use super::RawTensor;
 use std::sync::{RwLock, Arc, RwLockReadGuard, RwLockWriteGuard};
-use crate::autograd::ops::set_matmul_grad;
-use crate::ShapeStrides;
+use crate::autograd::ops::{set_matmul_grad, set_exp_grad};
 
 mod ops;
 type Shared<T> = Arc<RwLock<T>>;
 
 #[derive(Debug)]
 enum Op{
-    MatMul(Tensor, Tensor)
+    MatMul(Tensor, Tensor),
+    Exp(Tensor),
 }
 
 impl Op{
@@ -17,6 +17,9 @@ impl Op{
         match self{
             Op::MatMul(left, right) => {
                 set_matmul_grad(left, right, child_grad);
+            }
+            Op::Exp(ten) => {
+                set_exp_grad(ten, child_grad);
             }
         }
     }
@@ -28,7 +31,7 @@ pub struct Tensor {
 }
 
 #[derive(Debug)]
-struct VariableData{
+pub struct VariableData{
     parent_op: Option<Op>,
     tensor: RawTensor,
     grad: Option<RawTensor>
@@ -41,6 +44,10 @@ impl Tensor {
         Self{
             inner: self.inner.clone()
         }
+    }
+
+    pub fn to_vec(&self) -> Vec<f32>{
+        self.inner.read().expect("Error acquiring read lock").tensor.to_vec()
     }
 
     /// Creates a read lock on it, panicking if that was not successful
@@ -60,7 +67,6 @@ impl Tensor {
     /// Manually sets the gradient of this Tensor.
     /// This function deep clones the input tensor
     pub fn set_grad(&mut self, grad: Tensor){
-
         let tensor = grad.write_lock().tensor.clone();
         self.write_lock().grad = Some(tensor);
     }
@@ -103,7 +109,7 @@ impl Tensor {
 }
 
 #[test]
-fn a(){
+fn mat_mul_grad_works(){
     let input = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![1, 2, 2]);
 
     let weight = Tensor::from_data_and_shape(vec![1., 2., 3., 4.], vec![1, 2, 2]);
@@ -112,6 +118,7 @@ fn a(){
     let c_grad = Tensor::from_data_and_shape(vec![1., 1., 1., 1.], vec![1, 2, 2]);
     c.set_grad(c_grad);
     c.backward();
-    // println!("{:#?}", c);
-    println!("{:#?}", weight.read_lock().grad);
+
+    assert_eq!(weight.read_lock().grad.as_ref().unwrap().to_vec(), &[7., 10., 15., 22.]);
+
 }

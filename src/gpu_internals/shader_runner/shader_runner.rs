@@ -1,6 +1,7 @@
-use crate::gpu_internals::gpu_buffers::{GpuBuffer, GpuUniformBuffer};
+use crate::gpu_internals::gpu_buffers::{GpuBuffer};
 use crate::gpu_internals::GpuInstance;
 use wgpu::{BindGroupEntry, BindGroupLayoutEntry, BindingResource, ShaderModule};
+use crate::{GpuTensor, AsShaderInput};
 
 #[derive(Debug)]
 pub enum BufferType<'a> {
@@ -35,6 +36,21 @@ impl <'a> ShaderInputs<'a>{
             binding_id: self.bindings.len() as u32,
             gpu_buffer_type: BufferType::Storage(gpu_buffer)
         });
+    }
+    pub fn with_buffer(mut self, gpu_buffer: &'a GpuBuffer) -> Self{
+        self.append_buffer(gpu_buffer);
+        self
+    }
+    pub fn with_tensor(mut self, gpu_tensor: &'a GpuTensor) -> Self{
+        let shader_inputs = gpu_tensor.to_shader_inputs();
+        for binding in shader_inputs.bindings{
+            self.bindings.push(ShaderBinding{
+                binding_id: self.bindings.len() as u32,
+                gpu_buffer_type: binding.gpu_buffer_type
+            });
+        }
+        self.push_constants.data.extend_from_slice(shader_inputs.push_constants.data.as_slice());
+        self
     }
 }
 

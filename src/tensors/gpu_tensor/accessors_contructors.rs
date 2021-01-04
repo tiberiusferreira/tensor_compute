@@ -1,6 +1,5 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
 use crate::gpu_internals::GpuInstance;
-use crate::tensors::gpu_tensor::indexing::{shape_strides_for_slice_range, SliceRangeInfo};
 use crate::tensors::gpu_tensor::utils::strides_from_deque_shape;
 use crate::{
     CpuTransferable, GpuAllocated, GpuStore, GpuTensor,
@@ -11,18 +10,18 @@ use std::collections::VecDeque;
 use std::fmt::{Debug, Display, Formatter};
 impl Debug for GpuTensor {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let k = blocking::block_on(self.to_cpu());
+        let k = blocking::block_on(self.to_cpu_async());
         Display::fmt(&k, f)
     }
 }
 
 #[async_trait(?Send)]
 impl GpuAllocated for GpuTensor {
-    fn get_gpu(&self) -> &'static GpuInstance {
+    fn gpu(&self) -> &'static GpuInstance {
         GpuStore::get(self.buffer.device_info())
     }
 
-    fn internal_gpu_buffer(&self) -> &GpuBuffer {
+    fn buffer(&self) -> &GpuBuffer {
         &self.buffer
     }
 }
@@ -49,7 +48,7 @@ impl GpuTensor {
     pub async fn new_filled(shape: Vec<usize>, fill_val: f32) -> GpuTensor {
         let gpu = GpuStore::get_default();
         let numel: usize = GpuTensor::numel_from_shape(&VecDeque::from(shape.clone()));
-        let buffer = gpu.new_empty_gpu_buffer(numel * std::mem::size_of::<f32>());
+        let buffer = gpu.empty_gpu_buffer(numel * std::mem::size_of::<f32>());
         let mut tensor = GpuTensor {
             buffer,
             shape_strides: ShapeStrides::from_shape_vec(shape),
@@ -68,7 +67,7 @@ impl GpuTensor {
         );
         let strides = strides_from_deque_shape(&shape);
         GpuTensor::from_buffer_with_strides_and_offset(
-            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&data)),
+            gpu.gpu_buffer_from_data(bytemuck::cast_slice(&data)),
             shape.clone(),
             strides.clone(),
             0,

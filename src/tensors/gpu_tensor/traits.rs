@@ -1,17 +1,15 @@
 use crate::gpu_internals::gpu_buffers::GpuBuffer;
-use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ShaderInputs, PushConstants};
+use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ShaderInputs};
 use crate::gpu_internals::GpuInstance;
 use crate::{CpuTensor, ShapeStrideTrait, GpuTensor};
 use async_trait::async_trait;
-use zerocopy::AsBytes;
-use std::process::exit;
 
 #[async_trait(?Send)]
 pub trait GpuAllocated {
-    fn get_gpu(&self) -> &'static GpuInstance;
-    fn internal_gpu_buffer(&self) -> &GpuBuffer;
+    fn gpu(&self) -> &'static GpuInstance;
+    fn buffer(&self) -> &GpuBuffer;
     fn buffer_size_in_bytes(&self) -> usize {
-        self.internal_gpu_buffer().size_bytes()
+        self.buffer().size_bytes()
     }
 }
 
@@ -20,7 +18,8 @@ impl<'a> AsShaderInput for GpuTensor {}
 
 #[async_trait(?Send)]
 pub trait CpuTransferable {
-    async fn to_cpu(&self) -> CpuTensor;
+    async fn to_cpu_async(&self) -> CpuTensor;
+    fn to_cpu(&self) -> CpuTensor;
 }
 
 #[async_trait(?Send)]
@@ -28,9 +27,9 @@ impl<T> CpuTransferable for T
 where
     T: GpuAllocated + ShapeStrideTrait,
 {
-    async fn to_cpu(&self) -> CpuTensor {
-        let gpu = self.get_gpu();
-        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.internal_gpu_buffer()).await;
+    async fn to_cpu_async(&self) -> CpuTensor {
+        let gpu = self.gpu();
+        let buffer_in_cpu_mem = gpu.copy_buffer_to_cpu_mem(self.buffer()).await;
         CpuTensor::new_with_strides_and_offset(
             buffer_in_cpu_mem,
             self.shape().clone(),
@@ -38,14 +37,18 @@ where
             self.offset(),
         )
     }
+
+    fn to_cpu(&self) -> CpuTensor {
+        blocking::block_on(self.to_cpu_async())
+    }
 }
 
 pub trait AsShaderInput: GpuAllocated + ShapeStrideTrait {
-    fn to_shader_inputs<'a>(&'a self, extend_from: Option<ShaderInputs<'a>>) -> ShaderInputs<'a> {
+    fn to_shader_inputs(&self) -> ShaderInputs {
         let ShaderInputs{
             mut bindings,
             mut push_constants
-        } = extend_from.unwrap_or_default();
+        } = Default::default();
 
         let mut shape: Vec<u32> = self.shape().iter().map(|&e| e as u32).collect();
         let mut strides: Vec<u32> = self.strides().iter().map(|&e| e as u32).collect();
@@ -65,7 +68,7 @@ pub trait AsShaderInput: GpuAllocated + ShapeStrideTrait {
         bindings.push(
             ShaderBinding {
                 binding_id: bindings.len() as u32,
-                gpu_buffer_type: BufferType::Storage(self.internal_gpu_buffer()),
+                gpu_buffer_type: BufferType::Storage(self.buffer()),
             });
         ShaderInputs{
             bindings,

@@ -1,0 +1,32 @@
+#version 450
+
+layout(local_size_x = 1) in;
+
+
+readonly layout(set = 0, binding = 0) buffer Left {
+    float[] ten_l;
+};
+
+readonly layout(set = 0, binding = 1) buffer Right {
+    float[] ten_r;
+};
+
+layout(set = 0, binding = 2) buffer Out {
+    float[] out_buffer;
+};
+
+layout(push_constant) uniform PushConsts {
+    uint shape_stride_len_l;
+    uint[8] shape_l;
+    uint[8] strides_l;
+    uint shape_stride_len_r;
+    uint[8] shape_r;
+    uint[8] strides_r;
+};
+
+void main() {
+    uint element_number = gl_GlobalInvocationID.x;
+    out_buffer[element_number] = ten_l[element_number] + ten_r[element_number];
+}
+
+

@@ -21,3 +21,15 @@ pub fn set_matmul_grad(left: &Tensor, right: &Tensor, child_grad: &RawTensor){
     };
     right.write_lock().grad = Some(new_grad);
 }
+
+
+pub fn set_exp_grad(original_input: &Tensor, child_grad: &RawTensor){
+    let write_lock = original_input.write_lock();
+
+    let new_grad = if let Some(existing) = &write_lock.grad{
+        existing.add(&write_lock.tensor)
+    }else{
+        write_lock.tensor.clone()
+    };
+    original_input.write_lock().grad = Some(new_grad);
+}

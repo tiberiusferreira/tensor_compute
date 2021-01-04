@@ -1,3 +1,6 @@
+//! This module wraps the GPU Tensor methods, providing both a blocking and async version of them
+//!
+
 mod cpu_tensor;
 mod gpu_tensor;
 use blocking::block_on;
@@ -9,7 +12,7 @@ use std::fmt::{Debug, Formatter};
 pub use traits::*;
 pub mod prelude;
 
-/// A Tensor is an N dimensional data structure. This is the entry point for most of the API
+/// A RawTensor is an N dimensional data structure. This is the entry point for most of the API
 /// of this crate. This is normally backed by GPU memory and its device chosen using the current
 /// default of the [`crate::GpuStore::get_default()`], which can be changed however, one can NOT
 /// do operations using two Tensors from different devices.
@@ -179,6 +182,15 @@ impl RawTensor {
         Self {
             actual_tensor: self.actual_tensor.clone().await,
         }
+    }
+
+
+    pub async fn to_vec_async(&self) -> Vec<f32> {
+        self.actual_tensor.to_cpu_async().await.as_contiguous_vec()
+    }
+
+    pub fn to_vec(&self) -> Vec<f32> {
+        self.actual_tensor.to_cpu().as_contiguous_vec()
     }
 
     /*******  Accessors  *******/
@@ -400,7 +412,7 @@ impl RawTensor {
 
     /// Same as [Tensor::to_cpu], but async.
     pub async fn to_cpu_async(&self) -> CpuTensor {
-        self.actual_tensor.to_cpu().await
+        self.actual_tensor.to_cpu_async().await
     }
 
     /// Copies the [`Tensor`] data from GPU memory to CPU memory.
@@ -408,7 +420,7 @@ impl RawTensor {
     /// Having the Tensor in CPU is necessary for some operations, for example printing the Tensor
     /// data.
     pub fn to_cpu(&self) -> CpuTensor {
-        block_on(self.actual_tensor.to_cpu())
+        block_on(self.actual_tensor.to_cpu_async())
     }
 
 

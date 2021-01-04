@@ -1,4 +1,4 @@
-use crate::{s, GpuTensor};
+use crate::{GpuTensor};
 
 #[test]
 fn compare_test() {

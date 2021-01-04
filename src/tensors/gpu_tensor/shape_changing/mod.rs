@@ -1,4 +1,4 @@
-use crate::{GpuTensor, ShapeStrides, MutShapeStrideTrait, ShapeStrideTrait};
+use crate::{GpuTensor, ShapeStrides, ShapeStrideTrait};
 #[cfg(test)]
 mod broadcast_tests;
 #[cfg(test)]

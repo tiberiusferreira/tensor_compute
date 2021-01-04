@@ -1,16 +1,18 @@
-use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
 use crate::gpu_internals::GpuInstance;
-use crate::{GpuAllocated, GpuTensor, ShapeStrideTrait};
-
-#[cfg(test)]
-mod tests;
-
-pub async fn leaky_relu(gpu: &GpuInstance, data: &GpuTensor, leakage: f32) -> GpuTensor {
-    let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("relu.spv"));
-
-    let leakage_as_tensor = GpuTensor::from_scalar(leakage);
-    let nb_output_numbers = data.numel();
-    let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
+use crate::{GpuTensor};
+//
+// #[cfg(test)]
+// mod tests;
+//
+pub async fn leaky_relu(_gpu: &GpuInstance, data: &GpuTensor, _leakage: f32) -> GpuTensor {
+    if data.is_empty(){
+        return data.clone().await;
+    }
+    // let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("relu.spv"));
+    //
+    // let leakage_as_tensor = GpuTensor::from_scalar(leakage);
+    // let nb_output_numbers = data.numel();
+    // let out_buffer_store = gpu.new_empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
     //
     // gpu.run_shader(
     //     &cs_module,

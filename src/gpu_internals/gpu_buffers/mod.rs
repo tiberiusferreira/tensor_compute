@@ -14,28 +14,6 @@ pub struct GpuBuffer {
     staging_output: bool,
 }
 
-pub struct GpuUniformBuffer {
-    /// The WebGPU buffer itself
-    buffer: Buffer,
-    /// Which device this buffer was allocated in
-    device_info: AdapterInfo,
-    /// The size of this buffer
-    size_bytes: usize,
-}
-
-impl GpuUniformBuffer {
-    pub fn layout(&self, binding: usize) -> wgpu::BindGroupLayoutEntry {
-        wgpu::BindGroupLayoutEntry {
-            binding: binding as u32,
-            visibility: wgpu::ShaderStage::COMPUTE,
-            ty: wgpu::BindingType::UniformBuffer {
-                dynamic: false,
-                min_binding_size: wgpu::BufferSize::new(4),
-            },
-            count: None
-        }
-    }
-}
 
 impl GpuBuffer {
     pub fn layout(&self, binding: u32) -> wgpu::BindGroupLayoutEntry {
@@ -67,22 +45,12 @@ impl GpuBuffer {
     }
 }
 
-impl GpuUniformBuffer {
-    pub fn size_bytes(&self) -> usize {
-        self.size_bytes
-    }
-    pub fn device_info(&self) -> &AdapterInfo {
-        &self.device_info
-    }
-    pub fn to_bind_resource(&self) -> wgpu::BindingResource {
-        wgpu::BindingResource::Buffer(self.buffer.slice(..))
-    }
-}
+
 
 impl GpuInstance {
     /// A Buffer which can be COPIED to from other buffers MAPPED to readonly CPU memory
     /// This is needed because we cant read STORAGE buffers directly
-    pub fn new_staging_output_buffer(&self, size: usize) -> GpuBuffer {
+    pub fn staging_output_buffer(&self, size: usize) -> GpuBuffer {
         let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: size as u64,
@@ -97,25 +65,10 @@ impl GpuInstance {
         }
     }
 
-    // pub fn new_uniform_buffer(&self, input_bytes: &[u8]) -> GpuUniformBuffer {
-    //     let buffer_descriptor = wgpu::util::BufferInitDescriptor {
-    //         label: None,
-    //         contents: input_bytes,
-    //         usage: wgpu::BufferUsage::UNIFORM,
-    //     };
-    //     let buffer = self.device().create_buffer_init(&buffer_descriptor);
-    //
-    //     GpuUniformBuffer {
-    //         buffer,
-    //         size_bytes: input_bytes.len(),
-    //         device_info: self.info().clone(),
-    //     }
-    // }
-
     /// Storage buffer with given data. Behind the scenes it actually creates a new buffer, maps
     /// it into host-visible memory, copies data from the given slice,
     /// and finally unmaps it, returning a [`Buffer`].
-    pub fn new_gpu_buffer_from_data(&self, input_bytes: &[u8]) -> GpuBuffer {
+    pub fn gpu_buffer_from_data(&self, input_bytes: &[u8]) -> GpuBuffer {
         let buffer_descriptor = wgpu::util::BufferInitDescriptor {
             label: None,
             contents: input_bytes,
@@ -133,7 +86,7 @@ impl GpuInstance {
     /// Creates an empty GPU buffer which can be copied to another buffer.
     /// One used case if to accumulate results of a computation in it and copy them to an
     /// output staging buffer. Also used to store shader computation results.
-    pub fn new_empty_gpu_buffer(&self, size_bytes: usize) -> GpuBuffer {
+    pub fn empty_gpu_buffer(&self, size_bytes: usize) -> GpuBuffer {
         let buffer = self.device().create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: size_bytes as u64,
@@ -148,9 +101,13 @@ impl GpuInstance {
         }
     }
 
+    pub fn empty_like(&self, buffer: &GpuBuffer) -> GpuBuffer {
+        self.empty_gpu_buffer(buffer.size_bytes)
+    }
+
     pub async fn copy_buffer_to_cpu_mem(&self, src_buffer: &GpuBuffer) -> Vec<f32> {
         let gpu = self;
-        let cpu_readable_output_buffer = gpu.new_staging_output_buffer(src_buffer.size_bytes());
+        let cpu_readable_output_buffer = gpu.staging_output_buffer(src_buffer.size_bytes());
 
         let mut encoder = gpu
             .device()

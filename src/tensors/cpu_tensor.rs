@@ -134,7 +134,7 @@ impl CpuTensor {
     pub fn to_gpu(&self) -> GpuTensor {
         let gpu = GpuStore::get_default();
         GpuTensor::from_buffer_with_strides_and_offset(
-            gpu.new_gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
+            gpu.gpu_buffer_from_data(bytemuck::cast_slice(&self.data)),
             self.shape.clone(),
             self.strides.clone(),
             self.offset,

@@ -1,9 +1,9 @@
-use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
-use crate::gpu_internals::GpuInstance;
-use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides, AsShaderInput};
-
-#[cfg(test)]
-mod tests;
+// use crate::gpu_internals::shader_runner::{BufferType, ShaderBinding, ThreadGroup};
+// use crate::gpu_internals::GpuInstance;
+// use crate::{GpuTensor, ShapeStrideTrait, ShapeStrides, AsShaderInput};
+//
+// #[cfg(test)]
+// mod tests;
 //
 // pub async fn make_contiguous<'a>(gpu: &GpuInstance, data: &GpuTensorView<'a>) -> GpuTensor {
 //     let cs_module = gpu.shader_from_file_bytes(wgpu::include_spirv!("make_contiguous.spv"));

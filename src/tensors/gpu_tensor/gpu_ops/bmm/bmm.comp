@@ -32,8 +32,8 @@ void main() {
     uint rows_out = rows_a;
     uint cols_out = cols_b;
 
-    uint curr_batch_out = index / stride_batch_size_a;
-    uint index_without_offset = index - curr_batch_out*stride_batch_size_a;
+    uint curr_batch_out = index / (rows_out*cols_out);
+    uint index_without_offset = index - curr_batch_out*(rows_out*cols_out);
     uint curr_out_row = index_without_offset / rows_out;
     uint curr_out_col = index_without_offset % rows_out;
 
