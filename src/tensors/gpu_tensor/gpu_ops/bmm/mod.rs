@@ -72,7 +72,6 @@ pub async fn bmm_kernel(
     let out_buffer_store = gpu.empty_gpu_buffer(std::mem::size_of::<f32>() * nb_output_numbers);
     shader_inputs.append_buffer(&out_buffer_store);
 
-    println!("{:?}", shader_inputs);
     gpu.run_shader(
         &cs_module,
             &shader_inputs,

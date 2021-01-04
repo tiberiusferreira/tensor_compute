@@ -3,7 +3,7 @@ use crate::gpu_internals::shader_runner::{ThreadGroup};
 use std::collections::VecDeque;
 
 impl GpuTensor{
-    pub fn sum(&self) -> Self{
+    pub async fn sum(&self) -> Self{
         let cs_module = self.gpu().shader_from_file_bytes(wgpu::include_spirv!("sum.spv"));
         let out_buffer_store = self.gpu().empty_gpu_buffer(std::mem::size_of::<f32>());
         let mut shader_inputs = self.to_shader_inputs();
@@ -29,17 +29,22 @@ mod test{
 
     #[test]
     fn sum_test_1d(){
-        let tensor = GpuTensor::from(vec![2., 3., 4., 5.], vec![4]);
-        let sum_tensor = tensor.sum();
-        assert_eq!(sum_tensor.shape(), &VecDeque::from(vec![1usize]));
-        assert_eq!(sum_tensor.to_cpu().raw_data_slice(), &[14.]);
+        blocking::block_on(async {
+            let tensor = GpuTensor::from(vec![2., 3., 4., 5.], vec![4]);
+            let sum_tensor = tensor.sum().await;
+            assert_eq!(sum_tensor.shape(), &VecDeque::from(vec![1usize]));
+            assert_eq!(sum_tensor.to_cpu().raw_data_slice(), &[14.]);
+        })
     }
 
     #[test]
     fn sum_test_2d(){
-        let tensor = GpuTensor::from(vec![2., 3., 4., -5.], vec![2, 2]);
-        let sum_tensor = tensor.sum();
-        assert_eq!(sum_tensor.shape(), &VecDeque::from(vec![1]));
-        assert_eq!(sum_tensor.to_cpu().raw_data_slice(), &[4.]);
+        blocking::block_on(async {
+            let tensor = GpuTensor::from(vec![2., 3., 4., -5.], vec![2, 2]);
+            let sum_tensor = tensor.sum().await;
+            assert_eq!(sum_tensor.shape(), &VecDeque::from(vec![1]));
+            assert_eq!(sum_tensor.to_cpu().raw_data_slice(), &[4.]);
+        });
+
     }
 }

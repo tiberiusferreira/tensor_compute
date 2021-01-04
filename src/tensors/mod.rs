@@ -193,6 +193,20 @@ impl RawTensor {
         self.actual_tensor.to_cpu().as_contiguous_vec()
     }
 
+    /// Assumes the tensor only has one element, panics otherwise
+    pub fn to_f32(&self) -> f32 {
+        let out = self.actual_tensor.to_cpu().as_contiguous_vec();
+        if out.len() != 1{
+            panic!("Tensor had {} elements, not only one", out.len());
+        }
+        out[0]
+    }
+
+    /// Return the number of elements in this tensor
+    pub fn numel(&self) -> usize {
+        self.actual_tensor.numel()
+    }
+
     /*******  Accessors  *******/
 
     /// Returns the shape of the [`Tensor`]
@@ -301,6 +315,57 @@ impl RawTensor {
             actual_tensor: block_on(self.actual_tensor.sub(&other.actual_tensor))
         }
     }
+
+    pub fn dot_mul(&self, other: &Self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.dot_mul(&other.actual_tensor))
+        }
+    }
+
+    pub fn dot_div(&self, other: &Self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.dot_div(&other.actual_tensor))
+        }
+    }
+
+    pub fn add_scalar(&self, scalar: f32) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.add_scalar(scalar))
+        }
+    }
+
+    pub fn sub_scalar(&self, scalar: f32) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.sub_scalar(scalar))
+        }
+    }
+
+
+    pub fn sum(&self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.sum())
+        }
+    }
+
+    pub async fn sum_async(&self) -> RawTensor {
+        RawTensor {
+            actual_tensor: self.actual_tensor.sum().await
+        }
+    }
+
+    pub fn exp(&self) -> RawTensor {
+        RawTensor {
+            actual_tensor: block_on(self.actual_tensor.exp())
+        }
+    }
+
+    pub async fn exp_async(&self) -> RawTensor {
+        RawTensor {
+            actual_tensor:self.actual_tensor.exp().await
+        }
+    }
+
+
 
     // /// Same as [`TensorView::add`] but async
     // pub async fn add_async(&self, other: &Self) -> Tensor {

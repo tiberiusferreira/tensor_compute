@@ -1,6 +1,5 @@
-use crate::gpu_internals::GpuInstance;
 use crate::{GpuTensor, ShapeStrideTrait, GpuAllocated, AsShaderInput};
-use crate::gpu_internals::shader_runner::{ShaderBinding, ThreadGroup, BufferType};
+use crate::gpu_internals::shader_runner::{ThreadGroup};
 #[cfg(test)]
 mod tests;
 
@@ -12,7 +11,7 @@ macro_rules! bin_element_wise_op {
                 let cs_module = self.gpu().shader_from_file_bytes(wgpu::include_spirv!($shader_path));
                 let nb_output_numbers = self.numel();
                 let output_buffer = self.gpu().empty_like(self.buffer());
-                let mut shader_inputs = self.to_shader_inputs()
+                let shader_inputs = self.to_shader_inputs()
                     .with_tensor(right_tensor)
                     .with_buffer(&output_buffer);
                 self.gpu().run_shader(

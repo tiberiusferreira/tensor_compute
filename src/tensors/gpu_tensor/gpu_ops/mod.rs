@@ -15,10 +15,6 @@ impl GpuTensor {
         compare::eq(self.gpu(), &self, &other).await
     }
 
-    pub async fn transpose(&self) -> GpuTensor {
-        transpose::transpose(self.gpu(), &self).await
-    }
-
     pub async fn leaky_relu(&self, leakage: f32) -> GpuTensor {
         relu::leaky_relu(self.gpu(), self, leakage).await
     }

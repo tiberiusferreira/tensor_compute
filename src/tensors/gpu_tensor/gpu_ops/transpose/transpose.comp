@@ -1,31 +1,30 @@
 #version 450
 layout(local_size_x = 1) in;
 
+
+
 readonly layout(set = 0, binding = 0) buffer Tensor {
-     float[] data;
+    float[] data;
 };
 
-readonly layout(set = 0, binding = 1) buffer TensorShape {
-    uint[] shapes;
-};
-
-readonly layout(set = 0, binding = 2) buffer TensorStrides {
-    uint[] strides;
-};
-
-readonly layout(set = 0, binding = 3) buffer ShapeLen {
-    uint shape_len;
-};
-
-layout(set = 0, binding = 4) buffer Out {
+layout(set = 0, binding = 1) buffer Out {
     float[] out_buffer;
 };
+
+layout(push_constant) uniform PushConsts {
+    uint shape_stride_len_l;
+    uint[8] shapes;
+    uint[8] strides;
+};
+
+
 
 
 void main() {
     uint index = gl_GlobalInvocationID.x; // 0 1 2 3
 
     uint offset = 0;
+    uint shape_len = shape_stride_len_l;
     uint remainer = index;
 
     for (uint shape_idx = 0; shape_idx < shape_len-2; shape_idx++){
